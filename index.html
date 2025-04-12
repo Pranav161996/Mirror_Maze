@@ -18,9 +18,9 @@
         .game-container {
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 0;
             box-sizing: border-box;
-            gap: 20px;
+            gap: 0;
             flex: 1;
         }
 
@@ -29,26 +29,38 @@
             display: flex;
             flex-direction: column;
             background: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 0;
+            border-radius: 0;
+            box-shadow: none;
             min-height: 0;
+            height: 520px; /* Just enough for header + map */
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0;
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 8px 8px 0 0;
         }
 
         h1 {
             font-size: 24px;
-            margin: 0 0 20px 0;
+            margin: 0;
             text-align: center;
+            flex: 1;
         }
 
         .map-container {
-            width: 100%;
-            height: 0;
-            padding-bottom: 100%;
+            width: 480px;
+            height: 480px;
             position: relative;
             background-color: #f8f8f8;
             border: 1px solid #ddd;
-            margin: auto;
+            margin: 0 auto;
+            padding: 0;
         }
 
         .cell {
@@ -84,23 +96,17 @@
         }
 
         .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 20px;
-            background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: none;
         }
 
         .move-counter {
             font-size: 20px;
             font-weight: bold;
             color: #333;
-            text-align: center;
-            padding: 10px;
-            background: #f8f8f8;
-            border-radius: 8px;
+            padding: 8px 12px;
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .arrow-keys {
@@ -146,14 +152,12 @@
             background-color: #666;
             color: white;
             border: none;
-            padding: 15px;
-            border-radius: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
             transition: all 0.2s;
-            margin: 0 auto;
-            max-width: 200px;
-            width: 100%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .reset-button:hover {
@@ -182,34 +186,69 @@
 
         @media (max-width: 768px) {
             .game-container {
-                padding: 10px;
+                padding: 0;
             }
 
             .game-content {
-                padding: 15px;
+                padding: 0;
+                height: auto;
+                min-height: 0;
             }
 
-            h1 {
-                font-size: 20px;
-                margin-bottom: 15px;
+            .game-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .move-counter, .reset-button {
+                display: none;
             }
 
             .controls {
-                padding: 15px;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                padding: 20px;
+                background: #ffffff;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             }
 
-            .arrow-key {
-                font-size: 20px;
-                padding: 10px;
+            .arrow-keys {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(3, 1fr);
+                gap: 10px;
+                aspect-ratio: 1;
+                max-width: min(60vw, 200px);
+                margin: 20px auto;
             }
 
-            .move-counter {
+            .mobile-move-counter {
                 font-size: 18px;
+                font-weight: bold;
+                color: #333;
+                text-align: center;
+                padding: 10px;
+                background: #f8f8f8;
+                border-radius: 8px;
             }
 
-            .reset-button {
+            .mobile-reset-button {
+                background-color: #666;
+                color: white;
+                border: none;
                 padding: 12px;
+                border-radius: 8px;
+                cursor: pointer;
                 font-size: 14px;
+                width: 100%;
+            }
+
+            .map-container {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1;
             }
         }
 
@@ -232,18 +271,22 @@
 <body>
     <div class="game-container">
         <div class="game-content">
-            <h1>Mirror Maze - Daily Puzzle</h1>
+            <div class="game-header">
+                <div class="move-counter">Moves: <span id="movesCount">0</span></div>
+                <h1>Mirror Maze - Daily Puzzle</h1>
+                <button class="reset-button" onclick="resetGame()">Reset (+5)</button>
+            </div>
             <div class="map-container" id="mapContainer"></div>
         </div>
         <div class="controls">
-            <div class="move-counter">Moves: <span id="movesCount">0</span></div>
+            <div class="mobile-move-counter">Moves: <span id="mobileMovesCount">0</span></div>
             <div class="arrow-keys">
                 <button class="arrow-key up" onclick="move('up')">↑</button>
                 <button class="arrow-key left" onclick="move('left')">←</button>
                 <button class="arrow-key right" onclick="move('right')">→</button>
                 <button class="arrow-key down" onclick="move('down')">↓</button>
             </div>
-            <button class="reset-button" onclick="resetGame()">Reset Position (+5 moves)</button>
+            <button class="mobile-reset-button" onclick="resetGame()">Reset Position (+5 moves)</button>
         </div>
     </div>
     <div class="win-message" id="winMessage">
@@ -324,6 +367,7 @@
 
         function updateMovesCounter() {
             document.getElementById('movesCount').textContent = movesCount;
+            document.getElementById('mobileMovesCount').textContent = movesCount;
         }
 
         function resetGame() {
