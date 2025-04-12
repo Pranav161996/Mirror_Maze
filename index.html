@@ -1,13 +1,533 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mirror Maze - Daily Puzzle</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f8f8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            box-sizing: border-box;
+            gap: 0;
+            flex: 1;
+        }
+
+        .game-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            padding: 0;
+            border-radius: 0;
+            box-shadow: none;
+            min-height: 0;
+            height: 520px; /* Just enough for header + map */
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0;
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 8px 8px 0 0;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0;
+            text-align: center;
+            flex: 1;
+        }
+
+        .map-container {
+            width: 480px;
+            height: 480px;
+            position: relative;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .cell {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        .wall {
+            background-color: #333;
+        }
+
+        .player1 {
+            background-color: #ff0000;
+            border-radius: 50%;
+        }
+
+        .player2 {
+            background-color: #0000ff;
+            border-radius: 50%;
+        }
+
+        .goal1 {
+            background-color: #ff9999;
+            border-radius: 50%;
+        }
+
+        .goal2 {
+            background-color: #9999ff;
+            border-radius: 50%;
+        }
+
+        .controls {
+            display: none;
+        }
+
+        .move-counter {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            padding: 8px 12px;
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .arrow-keys {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+            aspect-ratio: 1;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .arrow-key {
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            padding: 15px;
+            touch-action: manipulation;
+        }
+
+        .arrow-key:hover {
+            background: #e0e0e0;
+        }
+
+        .arrow-key:active, .arrow-key.active {
+            background: #d0d0d0;
+            transform: scale(0.95);
+        }
+
+        .up { grid-column: 2; grid-row: 1; }
+        .left { grid-column: 1; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 3; }
+
+        .reset-button {
+            background-color: #666;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .reset-button:hover {
+            background-color: #555;
+        }
+
+        .win-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            text-align: center;
+            display: none;
+            z-index: 1000;
+            width: 90%;
+            max-width: 300px;
+        }
+
+        .win-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 0;
+            }
+
+            .game-content {
+                padding: 0;
+                height: auto;
+                min-height: 0;
+            }
+
+            .game-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .move-counter, .reset-button {
+                display: none;
+            }
+
+            .controls {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                padding: 20px;
+                background: #ffffff;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            }
+
+            .arrow-keys {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(3, 1fr);
+                gap: 10px;
+                aspect-ratio: 1;
+                max-width: min(60vw, 200px);
+                margin: 20px auto;
+            }
+
+            .mobile-move-counter {
+                font-size: 18px;
+                font-weight: bold;
+                color: #333;
+                text-align: center;
+                padding: 10px;
+                background: #f8f8f8;
+                border-radius: 8px;
+            }
+
+            .mobile-reset-button {
+                background-color: #666;
+                color: white;
+                border: none;
+                padding: 12px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                width: 100%;
+            }
+
+            .map-container {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .game-container {
+                flex-direction: row;
+            }
+
+            .game-content {
+                flex: 3;
+            }
+
+            .controls {
+                flex: 1;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-content">
+            <div class="game-header">
+                <div class="move-counter">Moves: <span id="movesCount">0</span></div>
+                <h1>Mirror Maze - Daily Puzzle</h1>
+                <button class="reset-button" onclick="resetGame()">Reset (+5)</button>
+            </div>
+            <div class="map-container" id="mapContainer"></div>
+        </div>
+        <div class="controls">
+            <div class="mobile-move-counter">Moves: <span id="mobileMovesCount">0</span></div>
+            <div class="arrow-keys">
+                <button class="arrow-key up" onclick="move('up')">↑</button>
+                <button class="arrow-key left" onclick="move('left')">←</button>
+                <button class="arrow-key right" onclick="move('right')">→</button>
+                <button class="arrow-key down" onclick="move('down')">↓</button>
+            </div>
+            <button class="mobile-reset-button" onclick="resetGame()">Reset Position (+5 moves)</button>
+        </div>
+    </div>
+    <div class="win-message" id="winMessage">
+        <h2>Congratulations! 🎉</h2>
+        <p>You completed the puzzle in <span id="finalMoves">0</span> moves!</p>
+    </div>
+
+    <div class="confetti"></div>
+
+    <script>
+        let currentMap = null;
+        let player1Pos = null;
+        let player2Pos = null;
+        let movesCount = 0;
+
+        // Load the puzzle from the URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Default puzzle data if file loading fails
+        const defaultPuzzle = {
+            width: 12,
+            height: 12,
+            player1: { x: 1, y: 1 },
+            player2: { x: 10, y: 10 },
+            goal1: { x: 10, y: 1 },
+            goal2: { x: 1, y: 10 },
+            walls: [
+                { x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 },
+                { x: 5, y: 2 }, { x: 6, y: 2 }, { x: 7, y: 2 },
+                { x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 },
+                { x: 5, y: 6 }, { x: 4, y: 6 }, { x: 3, y: 6 },
+                { x: 2, y: 7 }, { x: 2, y: 8 }, { x: 3, y: 8 }, { x: 4, y: 8 },
+                { x: 9, y: 2 }, { x: 9, y: 3 }, { x: 8, y: 3 }, { x: 7, y: 3 },
+                { x: 6, y: 3 }, { x: 6, y: 4 },
+                { x: 9, y: 9 }, { x: 8, y: 9 }, { x: 7, y: 9 },
+                { x: 7, y: 10 }, { x: 7, y: 11 }, { x: 6, y: 11 }
+            ]
+        };
+
+        function getTodayPuzzleFile() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `mirror_maze_${year}-${month}-${day}.json`;
+        }
+
+        function loadPuzzle() {
+            const puzzleFile = urlParams.get('puzzle') || getTodayPuzzleFile();
+            fetch(puzzleFile)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    currentMap = data;
+                    player1Pos = { ...data.player1 };
+                    player2Pos = { ...data.player2 };
+                    renderMap();
+                })
+                .catch(error => {
+                    console.warn('Error loading puzzle file, using default puzzle:', error);
+                    currentMap = defaultPuzzle;
+                    player1Pos = { ...defaultPuzzle.player1 };
+                    player2Pos = { ...defaultPuzzle.player2 };
+                    renderMap();
+                    document.getElementById('mapContainer').insertAdjacentHTML('afterbegin', 
+                        // '<div class="error-message">' +
+                        // 'Using default puzzle. To load a custom puzzle, add ?puzzle=your_puzzle.json to the URL</div>'
+                    );
+                });
+        }
+
+        // Load the puzzle when the page loads
+        loadPuzzle();
+
+        function updateMovesCounter() {
+            document.getElementById('movesCount').textContent = movesCount;
+            document.getElementById('mobileMovesCount').textContent = movesCount;
+        }
+
+        function resetGame() {
+            if (!currentMap) return;
+            player1Pos = { ...currentMap.player1 };
+            player2Pos = { ...currentMap.player2 };
+            movesCount += 5;
+            updateMovesCounter();
+            renderMap();
+        }
+
+        function highlightKey(key) {
+            const keyElement = document.querySelector(`.arrow-key.${key}`);
+            if (keyElement) {
+                keyElement.classList.add('active');
+                setTimeout(() => keyElement.classList.remove('active'), 200);
+            }
+        }
+
+        function move(direction) {
+            if (!currentMap) return;
+
+            const movePlayer = (player, dx, dy) => {
+                const newX = player.x + dx;
+                const newY = player.y + dy;
+                
+                if (newX < 1 || newX > currentMap.width || newY < 1 || newY > currentMap.height) {
+                    return;
+                }
+
+                const isWall = currentMap.walls.some(wall => wall.x === newX && wall.y === newY);
+                if (isWall) {
+                    return;
+                }
+
+                player.x = newX;
+                player.y = newY;
+            };
+
+            switch(direction) {
+                case 'up':
+                    movePlayer(player1Pos, 0, -1);
+                    movePlayer(player2Pos, 0, 1);
+                    break;
+                case 'down':
+                    movePlayer(player1Pos, 0, 1);
+                    movePlayer(player2Pos, 0, -1);
+                    break;
+                case 'left':
+                    movePlayer(player1Pos, -1, 0);
+                    movePlayer(player2Pos, 1, 0);
+                    break;
+                case 'right':
+                    movePlayer(player1Pos, 1, 0);
+                    movePlayer(player2Pos, -1, 0);
+                    break;
+            }
+
+            movesCount++;
+            updateMovesCounter();
+            renderMap();
+
+            // Check win condition
+            if (player1Pos.x === currentMap.goal1.x && player1Pos.y === currentMap.goal1.y &&
+                player2Pos.x === currentMap.goal2.x && player2Pos.y === currentMap.goal2.y) {
+                document.getElementById('finalMoves').textContent = movesCount;
+                showWinMessage();
+            }
+        }
+
+        function renderMap() {
+            const container = document.getElementById('mapContainer');
+            container.innerHTML = '';
+            
+            const cellSize = 40;
+            const containerWidth = currentMap.width * cellSize;
+            const containerHeight = currentMap.height * cellSize;
+            
+            container.style.width = containerWidth + 'px';
+            container.style.height = containerHeight + 'px';
+            container.style.margin = 'auto';
+
+            // Render walls
+            currentMap.walls.forEach(wall => {
+                const wallElement = document.createElement('div');
+                wallElement.className = 'cell wall';
+                wallElement.style.left = (wall.x - 1) * cellSize + 'px';
+                wallElement.style.top = (wall.y - 1) * cellSize + 'px';
+                container.appendChild(wallElement);
+            });
+
+            // Render goals
+            const goal1 = document.createElement('div');
+            goal1.className = 'cell goal1';
+            goal1.style.left = (currentMap.goal1.x - 1) * cellSize + 'px';
+            goal1.style.top = (currentMap.goal1.y - 1) * cellSize + 'px';
+            container.appendChild(goal1);
+
+            const goal2 = document.createElement('div');
+            goal2.className = 'cell goal2';
+            goal2.style.left = (currentMap.goal2.x - 1) * cellSize + 'px';
+            goal2.style.top = (currentMap.goal2.y - 1) * cellSize + 'px';
+            container.appendChild(goal2);
+
+            // Render players
+            const player1 = document.createElement('div');
+            player1.className = 'cell player1';
+            player1.style.left = (player1Pos.x - 1) * cellSize + 'px';
+            player1.style.top = (player1Pos.y - 1) * cellSize + 'px';
+            container.appendChild(player1);
+
+            const player2 = document.createElement('div');
+            player2.className = 'cell player2';
+            player2.style.left = (player2Pos.x - 1) * cellSize + 'px';
+            player2.style.top = (player2Pos.y - 1) * cellSize + 'px';
+            container.appendChild(player2);
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp': 
+                    move('up');
+                    highlightKey('up');
+                    break;
+                case 'ArrowDown': 
+                    move('down');
+                    highlightKey('down');
+                    break;
+                case 'ArrowLeft': 
+                    move('left');
+                    highlightKey('left');
+                    break;
+                case 'ArrowRight': 
+                    move('right');
+                    highlightKey('right');
+                    break;
+            }
+        });
+
+        function promptForName() {
+            const name = prompt('Congratulations! Enter your name for the leaderboard:');
+            if (name) {
+                updateLeaderboard(name, movesCount);
+            }
+        }
+
+        function showWinMessage() {
+            const winMessage = document.querySelector('.win-message');
+            winMessage.innerHTML = `Congrats! You cleared the level in ${movesCount} moves!`;
+            winMessage.classList.add('show');
+            showConfetti();
+            promptForName();
+        }
+
+        function showConfetti() {
+            const confetti = document.querySelector('.confetti');
+            confetti.classList.add('show');
+            setTimeout(() => confetti.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html> 
