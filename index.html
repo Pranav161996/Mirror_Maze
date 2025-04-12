@@ -113,40 +113,33 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            gap: 10px;
-            aspect-ratio: 1;
-            max-width: 200px;
-            margin: 0 auto;
+            gap: 8px;
+            width: min(45vw, 180px);
+            margin: 5px auto 15px;
         }
 
         .arrow-key {
-            background: #f0f0f0;
-            border: none;
-            border-radius: 8px;
+            aspect-ratio: 1;
             font-size: 24px;
-            cursor: pointer;
-            transition: all 0.2s;
+            border: none;
+            background: white;
+            color: #333;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #333;
-            padding: 15px;
-            touch-action: manipulation;
+            transition: all 0.2s;
+            padding: 0;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .arrow-key:hover {
-            background: #e0e0e0;
-        }
-
-        .arrow-key:active, .arrow-key.active {
-            background: #d0d0d0;
-            transform: scale(0.95);
-        }
-
-        .up { grid-column: 2; grid-row: 1; }
-        .left { grid-column: 1; grid-row: 2; }
-        .right { grid-column: 3; grid-row: 2; }
-        .down { grid-column: 2; grid-row: 3; }
+        /* Position the arrow keys in the grid */
+        .arrow-key.up { grid-column: 2; grid-row: 1; }
+        .arrow-key.left { grid-column: 1; grid-row: 2; }
+        .arrow-key.right { grid-column: 3; grid-row: 2; }
+        .arrow-key.down { grid-column: 2; grid-row: 3; }
 
         .reset-button {
             background-color: #666;
@@ -187,68 +180,121 @@
         @media (max-width: 768px) {
             .game-container {
                 padding: 0;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
             }
 
             .game-content {
                 padding: 0;
                 height: auto;
                 min-height: 0;
+                flex: 1;
             }
 
             .game-header {
-                flex-direction: column;
-                gap: 10px;
+                padding: 5px;
             }
 
-            .move-counter, .reset-button {
-                display: none;
+            h1 {
+                font-size: 18px;
+            }
+
+            .map-container {
+                width: 100vw;
+                height: 100vw;
+                max-width: 100%;
+                max-height: 50vh;
+                aspect-ratio: 1;
+                margin: 0 auto;
             }
 
             .controls {
                 display: flex;
                 flex-direction: column;
-                gap: 15px;
-                padding: 20px;
-                background: #ffffff;
-                border-radius: 10px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                align-items: center;
+                padding: 15px;
+                background: #f8f8f8;
+                border-top: 1px solid #eee;
+            }
+
+            .mobile-move-counter {
+                font-size: 18px;
+                font-weight: 600;
+                color: #333;
+                padding: 8px 16px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                margin-bottom: 15px;
             }
 
             .arrow-keys {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
                 grid-template-rows: repeat(3, 1fr);
-                gap: 10px;
-                aspect-ratio: 1;
-                max-width: min(60vw, 200px);
-                margin: 20px auto;
+                gap: 8px;
+                width: min(45vw, 180px);
+                margin: 5px auto 15px;
             }
 
-            .mobile-move-counter {
-                font-size: 18px;
-                font-weight: bold;
+            .arrow-key {
+                aspect-ratio: 1;
+                font-size: 24px;
+                border: none;
+                background: white;
                 color: #333;
-                text-align: center;
-                padding: 10px;
-                background: #f8f8f8;
-                border-radius: 8px;
+                border-radius: 12px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+                padding: 0;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .arrow-key:active {
+                transform: scale(0.95);
+                background: #f0f0f0;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            }
+
+            .arrow-key.active {
+                background: #f0f0f0;
+                transform: scale(0.95);
             }
 
             .mobile-reset-button {
-                background-color: #666;
+                background: #4a90e2;
                 color: white;
                 border: none;
-                padding: 12px;
-                border-radius: 8px;
+                padding: 12px 24px;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                box-shadow: 0 2px 4px rgba(74, 144, 226, 0.2);
                 cursor: pointer;
-                font-size: 14px;
-                width: 100%;
+                transition: all 0.2s;
+                width: min(80%, 250px);
+                -webkit-tap-highlight-color: transparent;
             }
 
-            .map-container {
-                width: 100%;
-                height: auto;
-                aspect-ratio: 1;
+            .mobile-reset-button:active {
+                transform: scale(0.98);
+                box-shadow: 0 1px 2px rgba(74, 144, 226, 0.1);
+            }
+
+            /* Remove the empty grid cells rule that was hiding buttons */
+            /* .arrow-keys > *:nth-child(4),
+            .arrow-keys > *:nth-child(6) {
+                visibility: hidden;
+            } */
+
+            .cell {
+                width: calc(100% / 12);
+                height: calc(100% / 12);
             }
         }
 
@@ -262,8 +308,7 @@
             }
 
             .controls {
-                flex: 1;
-                max-width: 300px;
+                display: none;
             }
         }
     </style>
