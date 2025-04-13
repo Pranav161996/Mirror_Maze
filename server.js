@@ -19,7 +19,11 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, '.')));
+
+// Serve static files - only in development
+if (process.env.NODE_ENV !== 'production') {
+    app.use(express.static(path.join(__dirname, '.')));
+}
 
 // Serve static files
 app.use(express.static('public'));
@@ -155,6 +159,11 @@ async function updateLeaderboard(leaderboard) {
 
 // Get leaderboard
 app.get('/api/leaderboard', async (req, res) => {
+    // Add CORS headers
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    
     // Add cache control headers
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Expires', '-1');
@@ -162,7 +171,7 @@ app.get('/api/leaderboard', async (req, res) => {
     
     try {
         const leaderboard = await getLeaderboard();
-        const gameName = req.query.game || 'Mirror_Maze'; // Default to Mirror_Maze if no game specified
+        const gameName = req.query.game || 'Mirror_Maze';
         
         // Filter by game name and sort by moves
         const scores = leaderboard
@@ -172,18 +181,24 @@ app.get('/api/leaderboard', async (req, res) => {
         
         res.json(scores);
     } catch (error) {
+        console.error('Leaderboard error:', error);
         res.status(500).json({ error: 'Failed to fetch leaderboard' });
     }
 });
 
 // Add score to leaderboard
 app.post('/api/leaderboard', async (req, res) => {
+    // Add CORS headers
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    
     // Add cache control headers
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Expires', '-1');
     res.set('Pragma', 'no-cache');
     
-    const { name, moves, game = 'Mirror_Maze' } = req.body; // Default game to Mirror_Maze
+    const { name, moves, game = 'Mirror_Maze' } = req.body;
     
     if (!name || typeof moves !== 'number' || !game) {
         return res.status(400).json({ error: 'Invalid score data' });
@@ -222,15 +237,36 @@ app.post('/api/leaderboard', async (req, res) => {
 
         res.json(scores);
     } catch (error) {
+        console.error('Update leaderboard error:', error);
         res.status(500).json({ error: 'Failed to update leaderboard' });
     }
 });
 
-// Serve the game
-// app.get('/', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'play_mirror_maze.html'));
-// });
+// Handle CORS preflight requests
+app.options('/api/leaderboard', (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(204).send();
+});
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-}); 
+// Serve the game in production
+if (process.env.NODE_ENV === 'production') {
+    app.get('/', (req, res) => {
+        res.sendFile(path.join(__dirname, 'index.html'));
+    });
+    
+    app.get('/play', (req, res) => {
+        res.sendFile(path.join(__dirname, 'play_mirror_maze.html'));
+    });
+}
+
+// Only start the server in development
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+// Export the Express app for Vercel
+export default app; 
