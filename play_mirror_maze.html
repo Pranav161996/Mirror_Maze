@@ -880,8 +880,7 @@
             </svg>
             <h2 class="game-title">Mirror Maze</h2>
             <p class="game-description">Guide two players through mirrored paths to reach their goals.</p>
-            <a href="play.html" class="game-button">Play</a>
-            <a href="archive.html" class="game-button archive-button">Archive</a>
+            <a href="index.html" class="game-button">Back to Home</a>
         </div>
     </div>
 
@@ -1187,7 +1186,7 @@
         // Add these functions to handle leaderboard
         async function fetchLeaderboard() {
             try {
-                const response = await fetch('/api/leaderboard');
+                const response = await fetch('/api/leaderboard?game=Mirror_Maze');
                 if (!response.ok) throw new Error('Failed to fetch leaderboard');
                 return await response.json();
             } catch (error) {
@@ -1203,7 +1202,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ name, moves })
+                    body: JSON.stringify({ name, moves, game: 'Mirror_Maze' })
                 });
                 
                 if (!response.ok) throw new Error('Failed to update leaderboard');
@@ -1267,7 +1266,7 @@
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ name, moves: movesCount })
+                        body: JSON.stringify({ name, moves: movesCount, game: 'Mirror_Maze' })
                     });
                     
                     if (!response.ok) {
@@ -1401,41 +1400,50 @@
 
         // Add leaderboard modal functions
         async function showLeaderboardModal() {
-            const modalOverlay = document.getElementById('leaderboardModalOverlay');
-            const modal = document.getElementById('leaderboardModal');
-            
-            // Fetch latest leaderboard data
-            const leaderboard = await fetchLeaderboard();
-            
-            // Display leaderboard in modal
-            const leaderboardList = document.getElementById('modalLeaderboardList');
-            leaderboardList.innerHTML = '';
+            try {
+                const modalOverlay = document.getElementById('leaderboardModalOverlay');
+                const modal = document.getElementById('leaderboardModal');
+                
+                // Show loading state
+                const leaderboardList = document.getElementById('modalLeaderboardList');
+                leaderboardList.innerHTML = '<li class="leaderboard-item">Loading...</li>';
+                
+                // Show modal immediately while loading
+                modalOverlay.classList.add('show');
+                modal.classList.add('show');
+                
+                // Fetch latest leaderboard data
+                const leaderboard = await fetchLeaderboard();
+                
+                // Display leaderboard in modal
+                leaderboardList.innerHTML = '';
 
-            if (leaderboard.length === 0) {
-                leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet today!</li>';
-            } else {
-                leaderboard.forEach((entry, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'leaderboard-item';
-                    
-                    if (index === 0) li.classList.add('gold');
-                    if (index === 1) li.classList.add('silver');
-                    if (index === 2) li.classList.add('bronze');
+                if (leaderboard.length === 0) {
+                    leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet!</li>';
+                } else {
+                    leaderboard.forEach((entry, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'leaderboard-item';
+                        
+                        if (index === 0) li.classList.add('gold');
+                        if (index === 1) li.classList.add('silver');
+                        if (index === 2) li.classList.add('bronze');
 
-                    li.innerHTML = `
-                        <span>${index + 1}. ${entry.name}</span>
-                        <span>${entry.moves} moves</span>
-                    `;
-                    leaderboardList.appendChild(li);
-                    
-                    // Add delay to each item's animation
-                    li.style.animationDelay = `${index * 0.1}s`;
-                });
+                        li.innerHTML = `
+                            <span>${index + 1}. ${entry.name}</span>
+                            <span>${entry.moves} moves</span>
+                        `;
+                        leaderboardList.appendChild(li);
+                        
+                        // Add delay to each item's animation
+                        li.style.animationDelay = `${index * 0.1}s`;
+                    });
+                }
+            } catch (error) {
+                console.error('Error showing leaderboard:', error);
+                const leaderboardList = document.getElementById('modalLeaderboardList');
+                leaderboardList.innerHTML = '<li class="leaderboard-item">Failed to load leaderboard. Please try again.</li>';
             }
-
-            // Show modal with animation
-            modalOverlay.classList.add('show');
-            modal.classList.add('show');
         }
 
         function hideLeaderboardModal() {

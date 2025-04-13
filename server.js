@@ -1,9 +1,14 @@
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const fetch = require('node-fetch');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import fs from 'fs';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import fetch from 'node-fetch';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load environment variables
 dotenv.config();
@@ -105,62 +110,120 @@ app.get('/api/test/jsonbin', async (req, res) => {
     }
 });
 
-// In-memory leaderboard (for demo purposes)
-let leaderboard = [];
+// Helper function to interact with JSONBin
+async function getLeaderboard() {
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${process.env.JSONBIN_BIN_ID}`, {
+            headers: {
+                'X-Master-Key': process.env.JSONBIN_API_KEY
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`JSONBin returned status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return Array.isArray(data.record) ? data.record : [];
+    } catch (error) {
+        console.error('Error fetching from JSONBin:', error);
+        return [];
+    }
+}
+
+async function updateLeaderboard(leaderboard) {
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${process.env.JSONBIN_BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': process.env.JSONBIN_API_KEY
+            },
+            body: JSON.stringify(leaderboard)
+        });
+
+        if (!response.ok) {
+            throw new Error(`JSONBin returned status: ${response.status}`);
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error updating JSONBin:', error);
+        return false;
+    }
+}
 
 // Get leaderboard
-app.get('/api/leaderboard', (req, res) => {
+app.get('/api/leaderboard', async (req, res) => {
     // Add cache control headers
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Expires', '-1');
     res.set('Pragma', 'no-cache');
     
-    // Filter for today's scores only
-    const today = new Date().toDateString();
-    const todayScores = leaderboard
-        .filter(entry => entry.date === today)
-        .sort((a, b) => a.moves - b.moves)
-        .slice(0, 10);
-    
-    res.json(todayScores);
+    try {
+        const leaderboard = await getLeaderboard();
+        const gameName = req.query.game || 'Mirror_Maze'; // Default to Mirror_Maze if no game specified
+        
+        // Filter by game name and sort by moves
+        const scores = leaderboard
+            .filter(entry => entry.game === gameName)
+            .sort((a, b) => a.moves - b.moves)
+            .slice(0, 10);
+        
+        res.json(scores);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    }
 });
 
 // Add score to leaderboard
-app.post('/api/leaderboard', (req, res) => {
+app.post('/api/leaderboard', async (req, res) => {
     // Add cache control headers
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Expires', '-1');
     res.set('Pragma', 'no-cache');
     
-    const { name, moves } = req.body;
+    const { name, moves, game = 'Mirror_Maze' } = req.body; // Default game to Mirror_Maze
     
-    if (!name || typeof moves !== 'number') {
+    if (!name || typeof moves !== 'number' || !game) {
         return res.status(400).json({ error: 'Invalid score data' });
     }
 
-    const today = new Date().toDateString();
-    const newEntry = {
-        name,
-        moves,
-        date: today,
-        timestamp: new Date().toISOString()
-    };
+    try {
+        const leaderboard = await getLeaderboard();
+        const today = new Date().toDateString();
+        const newEntry = {
+            name,
+            moves,
+            game,
+            date: today,
+            timestamp: new Date().toISOString()
+        };
 
-    // Filter out old entries from today (if any) from the same player
-    leaderboard = leaderboard.filter(entry => 
-        entry.date !== today || entry.name !== name
-    );
-    
-    // Add new entry
-    leaderboard.push(newEntry);
-    
-    // Get today's scores, sort, and keep top 10
-    const todayScores = leaderboard
-        .filter(entry => entry.date === today)
-        .sort((a, b) => a.moves - b.moves)
-        .slice(0, 10);
+        // Filter out old entries from the same player for the same game
+        const filteredLeaderboard = leaderboard.filter(entry => 
+            !(entry.game === game && entry.name === name)
+        );
+        
+        // Add new entry
+        filteredLeaderboard.push(newEntry);
+        
+        // Update JSONBin
+        const success = await updateLeaderboard(filteredLeaderboard);
+        if (!success) {
+            throw new Error('Failed to update leaderboard');
+        }
+        
+        // Get scores for this game only
+        const scores = filteredLeaderboard
+            .filter(entry => entry.game === game)
+            .sort((a, b) => a.moves - b.moves)
+            .slice(0, 10);
 
-    res.json(todayScores);
+        res.json(scores);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update leaderboard' });
+    }
 });
 
 // Serve the game
