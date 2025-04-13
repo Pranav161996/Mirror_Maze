@@ -173,18 +173,64 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             text-align: center;
             display: none;
             z-index: 1000;
             width: 90%;
-            max-width: 300px;
+            max-width: 400px;
+        }
+
+        .win-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
         }
 
         .win-message.show {
             display: block;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .win-overlay.show {
+            display: flex;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .win-message h2 {
+            color: #333;
+            font-size: 28px;
+            margin: 0 0 15px;
+        }
+
+        .win-message p {
+            color: #666;
+            font-size: 18px;
+            margin: 0 0 20px;
+        }
+
+        #finalMoves {
+            font-weight: bold;
+            color: #4a90e2;
         }
 
         @media (max-width: 768px) {
@@ -204,28 +250,64 @@
             }
 
             .game-header {
+                flex-direction: column;
+                gap: 12px;
                 padding: 15px;
-                background: white;
-                border-bottom: 1px solid #eee;
+                align-items: center;
             }
 
-            h1 {
+            .game-header h1 {
                 font-size: 20px;
-                font-weight: 600;
+                order: -1; /* Move title to top */
+            }
+
+            .game-header > div:last-child {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                gap: 12px;
             }
 
             .move-counter {
-                font-size: 16px;
+                font-size: 14px;
                 padding: 6px 12px;
                 background: #f8f8f8;
                 border-radius: 20px;
                 color: #444;
             }
 
-            .reset-button {
+            .leaderboard-button, .reset-button {
+                padding: 8px 16px;
                 font-size: 14px;
-                padding: 6px 12px;
                 border-radius: 20px;
+                min-width: 100px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+            }
+
+            .leaderboard-button svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            .game-content {
+                padding-top: 0;
+            }
+
+            /* Hide desktop move counter in mobile */
+            .game-header .move-counter {
+                display: none;
+            }
+
+            /* Show mobile move counter */
+            .mobile-move-counter {
+                display: block;
+                text-align: center;
+                margin: 10px 0;
+                font-size: 16px;
+                font-weight: bold;
             }
 
             .map-container {
@@ -275,39 +357,6 @@
                 border-top: 1px solid #eee;
                 margin-top: 20px;
                 box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
-            }
-
-            .mobile-move-counter {
-                margin: 0 0 25px;
-                background: #f8f8f8;
-                padding: 10px 20px;
-                border-radius: 25px;
-                font-weight: 600;
-                color: #444;
-                font-size: 16px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            }
-
-            .arrow-keys {
-                width: min(60vw, 240px);
-                margin: 0 auto 25px;
-                gap: 12px;
-            }
-
-            .arrow-key {
-                aspect-ratio: 1;
-                font-size: 28px;
-                background: white;
-                color: #444;
-                border-radius: 16px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                border: 1px solid #eee;
-            }
-
-            .arrow-key:active {
-                transform: scale(0.95);
-                background: #f8f8f8;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             }
 
             .mobile-reset-button {
@@ -506,6 +555,280 @@
             background: #357abd;
             transform: translateY(-2px);
         }
+
+        /* Add leaderboard styles */
+        .leaderboard {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .leaderboard h3 {
+            margin: 0 0 15px;
+            color: #333;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #f8f8f8;
+            font-size: 16px;
+            transform: translateX(-100%);
+            opacity: 0;
+            animation: slideIn 0.5s forwards;
+        }
+
+        @keyframes slideIn {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .leaderboard-item.new-entry {
+            background: #e6f7ff;
+            animation: highlightEntry 2s ease-in-out;
+        }
+
+        @keyframes highlightEntry {
+            0% {
+                background: #ffd700;
+                transform: scale(1.05);
+            }
+            50% {
+                background: #e6f7ff;
+                transform: scale(1.02);
+            }
+            100% {
+                background: #e6f7ff;
+                transform: scale(1);
+            }
+        }
+
+        .rank-badge {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4a90e2;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            opacity: 0;
+            animation: fadeInDown 0.5s forwards;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .leaderboard-item:nth-child(1) {
+            background: #ffd700;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .leaderboard-item:nth-child(2) {
+            background: #c0c0c0;
+            color: #000;
+        }
+
+        .leaderboard-item:nth-child(3) {
+            background: #cd7f32;
+            color: #000;
+        }
+
+        .win-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Update existing win-message styles */
+        .win-message {
+            width: 90%;
+            max-width: 400px;
+            padding: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .leaderboard {
+                margin: 15px auto;
+            }
+        }
+
+        .confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1001;
+            display: none;
+        }
+
+        .confetti.show {
+            display: block;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 30px;
+            background: #ffd700;
+            top: 0;
+            opacity: 0;
+        }
+
+        @keyframes confettiRain {
+            0% {
+                opacity: 1;
+                transform: translateY(0) rotateX(0) rotateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(100vh) rotateX(360deg) rotateY(360deg);
+            }
+        }
+
+        .dismiss-button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dismiss-button:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+        }
+
+        .leaderboard-button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .leaderboard-button:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+        }
+
+        .leaderboard-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .leaderboard-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 90%;
+            max-width: 400px;
+            display: none;
+        }
+
+        .leaderboard-modal.show {
+            display: block;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .leaderboard-modal h2 {
+            color: #333;
+            font-size: 24px;
+            margin: 0 0 20px;
+            text-align: center;
+        }
+
+        .leaderboard-modal .close-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 5px;
+            line-height: 1;
+        }
+
+        .leaderboard-modal .close-button:hover {
+            color: #333;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 999;
+        }
+
+        .modal-overlay.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .leaderboard-button {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+
+            .leaderboard-button svg {
+                width: 14px;
+                height: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -523,7 +846,15 @@
             <div class="game-header">
                 <div class="move-counter">Moves: <span id="movesCount">0</span></div>
                 <h1>Mirror Maze - Daily Puzzle</h1>
-                <button class="reset-button" onclick="resetGame()">Reset (+5)</button>
+                <div style="display: flex; gap: 10px;">
+                    <button class="leaderboard-button" onclick="showLeaderboardModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 6h8M8 12h8M8 18h8M4 6h2M4 12h2M4 18h2"/>
+                        </svg>
+                        Leaderboard
+                    </button>
+                    <button class="reset-button" onclick="resetGame()">Reset (+5)</button>
+                </div>
             </div>
             <div class="map-container" id="mapContainer"></div>
         </div>
@@ -537,10 +868,6 @@
             </div>
             <button class="mobile-reset-button" onclick="resetGame()">Reset Position (+5 moves)</button>
         </div>
-    </div>
-    <div class="win-message" id="winMessage">
-        <h2>Congratulations! 🎉</h2>
-        <p>You completed the puzzle in <span id="finalMoves">0</span> moves!</p>
     </div>
 
     <div class="confetti"></div>
@@ -558,11 +885,37 @@
         </div>
     </div>
 
+    <!-- Add leaderboard modal -->
+    <div class="modal-overlay" id="leaderboardModalOverlay"></div>
+    <div class="leaderboard-modal" id="leaderboardModal">
+        <button class="close-button" onclick="hideLeaderboardModal()">×</button>
+        <h2>Daily Leaderboard</h2>
+        <div class="leaderboard">
+            <ul class="leaderboard-list" id="modalLeaderboardList">
+                <!-- Leaderboard items will be inserted here -->
+            </ul>
+        </div>
+    </div>
+
     <script>
         let currentMap = null;
         let player1Pos = null;
         let player2Pos = null;
         let movesCount = 0;
+        let gameWon = false; // Add flag to track game state
+
+        // Add secure configuration loading
+        async function getJSONBinConfig() {
+            try {
+                // In production, this would fetch from your secure backend
+                const response = await fetch('/api/config/jsonbin');
+                const config = await response.json();
+                return config;
+            } catch (error) {
+                console.error('Error loading JSONBin configuration:', error);
+                return null;
+            }
+        }
 
         // Function to save game state
         function saveGameState() {
@@ -570,6 +923,7 @@
                 movesCount,
                 player1Pos,
                 player2Pos,
+                gameWon,
                 timestamp: new Date().toDateString() // To reset state for new daily puzzles
             };
             localStorage.setItem('mirrorMazeGameState', JSON.stringify(gameState));
@@ -585,6 +939,7 @@
                     movesCount = state.movesCount;
                     player1Pos = state.player1Pos;
                     player2Pos = state.player2Pos;
+                    gameWon = state.gameWon || false;
                     updateMovesCounter();
                     return true;
                 }
@@ -625,6 +980,7 @@
         }
 
         function loadPuzzle() {
+            gameWon = false; // Reset game state when loading new puzzle
             const puzzleFile = urlParams.get('puzzle') || getTodayPuzzleFile();
             fetch(puzzleFile)
                 .then(response => {
@@ -635,7 +991,6 @@
                 })
                 .then(data => {
                     currentMap = data;
-                    // Only set initial positions if there's no saved state
                     if (!loadGameState()) {
                         player1Pos = { ...data.player1 };
                         player2Pos = { ...data.player2 };
@@ -646,7 +1001,6 @@
                 .catch(error => {
                     console.warn('Error loading puzzle file, using default puzzle:', error);
                     currentMap = defaultPuzzle;
-                    // Only set initial positions if there's no saved state
                     if (!loadGameState()) {
                         player1Pos = { ...defaultPuzzle.player1 };
                         player2Pos = { ...defaultPuzzle.player2 };
@@ -665,12 +1019,12 @@
         }
 
         function resetGame() {
-            if (!currentMap) return;
+            if (!currentMap || gameWon) return; // Don't allow reset if game is won
             player1Pos = { ...currentMap.player1 };
             player2Pos = { ...currentMap.player2 };
             movesCount += 5;
             updateMovesCounter();
-            saveGameState(); // Save after reset
+            saveGameState();
             renderMap();
         }
 
@@ -682,8 +1036,17 @@
             }
         }
 
+        function checkWinCondition() {
+            if (!currentMap) return false;
+            
+            const player1OnGoal = player1Pos.x === currentMap.goal1.x && player1Pos.y === currentMap.goal1.y;
+            const player2OnGoal = player2Pos.x === currentMap.goal2.x && player2Pos.y === currentMap.goal2.y;
+            
+            return player1OnGoal && player2OnGoal;
+        }
+
         function move(direction) {
-            if (!currentMap) return;
+            if (!currentMap || gameWon) return;
 
             const movePlayer = (player, dx, dy) => {
                 const newX = player.x + dx;
@@ -723,14 +1086,15 @@
 
             movesCount++;
             updateMovesCounter();
-            saveGameState(); // Save after each move
             renderMap();
 
-            // Check win condition
-            if (player1Pos.x === currentMap.goal1.x && player1Pos.y === currentMap.goal1.y &&
-                player2Pos.x === currentMap.goal2.x && player2Pos.y === currentMap.goal2.y) {
-                document.getElementById('finalMoves').textContent = movesCount;
-                showWinMessage();
+            // Check win condition after rendering
+            if (checkWinCondition()) {
+                gameWon = true;
+                saveGameState(); // Save game state after setting gameWon
+                setTimeout(() => showWinMessage(), 100);
+            } else {
+                saveGameState();
             }
         }
 
@@ -796,8 +1160,9 @@
 
         // Keyboard controls
         document.addEventListener('keydown', (e) => {
+            if (gameWon) return; // Don't process keyboard input if game is won
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                e.preventDefault(); // Prevent scrolling only for arrow keys
+                e.preventDefault();
                 switch(e.key) {
                     case 'ArrowUp': 
                         move('up');
@@ -819,25 +1184,200 @@
             }
         });
 
-        function promptForName() {
-            const name = prompt('Congratulations! Enter your name for the leaderboard:');
-            if (name) {
-                updateLeaderboard(name, movesCount);
+        // Add these functions to handle leaderboard
+        async function fetchLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard');
+                if (!response.ok) throw new Error('Failed to fetch leaderboard');
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching leaderboard:', error);
+                return [];
             }
         }
 
-        function showWinMessage() {
-            const winMessage = document.querySelector('.win-message');
-            winMessage.innerHTML = `Congrats! You cleared the level in ${movesCount} moves!`;
-            winMessage.classList.add('show');
+        async function updateLeaderboard(name, moves) {
+            try {
+                const response = await fetch('/api/leaderboard', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, moves })
+                });
+                
+                if (!response.ok) throw new Error('Failed to update leaderboard');
+                const leaderboard = await response.json();
+                displayLeaderboard(leaderboard);
+            } catch (error) {
+                console.error('Error updating leaderboard:', error);
+            }
+        }
+
+        function displayLeaderboard(leaderboard) {
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+
+            if (leaderboard.length === 0) {
+                leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet today!</li>';
+                return;
+            }
+
+            // Find the latest entry (assuming it's the last one in the array)
+            const latestEntry = leaderboard[leaderboard.length - 1];
+            const latestTimestamp = latestEntry.timestamp;
+
+            leaderboard.forEach((entry, index) => {
+                const li = document.createElement('li');
+                li.className = 'leaderboard-item';
+                
+                // Add special styling for top 3
+                if (index === 0) li.classList.add('gold');
+                if (index === 1) li.classList.add('silver');
+                if (index === 2) li.classList.add('bronze');
+
+                // Add new-entry class if this is the latest entry
+                if (entry.timestamp === latestTimestamp) {
+                    li.classList.add('new-entry');
+                    // Add rank badge
+                    const rankBadge = document.createElement('div');
+                    rankBadge.className = 'rank-badge';
+                    rankBadge.textContent = `Rank #${index + 1}`;
+                    li.appendChild(rankBadge);
+                }
+
+                li.innerHTML = `
+                    <span>${index + 1}. ${entry.name}</span>
+                    <span>${entry.moves} moves</span>
+                `;
+                leaderboardList.appendChild(li);
+
+                // Add delay to each item's animation
+                li.style.animationDelay = `${index * 0.1}s`;
+            });
+        }
+
+        // Update the promptForName function
+        async function promptForName() {
+            const name = prompt('Congratulations! Enter your name for the leaderboard:');
+            if (name) {
+                try {
+                    const response = await fetch('/api/leaderboard', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ name, moves: movesCount })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to update leaderboard');
+                    }
+                    
+                    const updatedLeaderboard = await response.json();
+                    console.log('Leaderboard updated:', updatedLeaderboard); // Debug log
+                    displayLeaderboard(updatedLeaderboard);
+                } catch (error) {
+                    console.error('Error updating leaderboard:', error);
+                    alert('Failed to update leaderboard. Please try again.');
+                }
+            }
+        }
+
+        // Update showWinMessage to include a dismiss button
+        async function showWinMessage() {
+            // Remove any existing win message elements
+            const existingOverlay = document.getElementById('winOverlay');
+            const existingMessage = document.getElementById('winMessage');
+            if (existingOverlay) existingOverlay.remove();
+            if (existingMessage) existingMessage.remove();
+
+            // Create overlay
+            const winOverlay = document.createElement('div');
+            winOverlay.className = 'win-overlay';
+            winOverlay.id = 'winOverlay';
+            document.body.appendChild(winOverlay);
+
+            // Create win message container
+            const winMessage = document.createElement('div');
+            winMessage.className = 'win-message';
+            winMessage.id = 'winMessage';
+            
+            // Add content to win message with dismiss button
+            winMessage.innerHTML = `
+                <h2>Congratulations! 🎉</h2>
+                <p>You completed the puzzle in <span id="finalMoves">${movesCount}</span> moves!</p>
+                <div class="leaderboard">
+                    <h3>Daily Leaderboard</h3>
+                    <ul class="leaderboard-list" id="leaderboardList">
+                        <!-- Leaderboard items will be inserted here -->
+                    </ul>
+                </div>
+                <button class="dismiss-button" onclick="dismissWinMessage()">Close</button>
+            `;
+            
+            document.body.appendChild(winMessage);
+            
+            // Fetch and display leaderboard
+            const leaderboard = await fetchLeaderboard();
+            displayLeaderboard(leaderboard);
+            
+            // Show the elements with animation
+            requestAnimationFrame(() => {
+                winOverlay.classList.add('show');
+                winMessage.classList.add('show');
+            });
+            
             showConfetti();
-            promptForName();
+            
+            // Wait for animations to complete before showing name prompt
+            if (!gameWon) { // Only prompt for name if not already won
+                setTimeout(() => {
+                    promptForName();
+                }, 1500);
+            }
+        }
+
+        // Add dismiss function
+        function dismissWinMessage() {
+            const winOverlay = document.getElementById('winOverlay');
+            const winMessage = document.getElementById('winMessage');
+            
+            if (winOverlay) winOverlay.remove();
+            if (winMessage) winMessage.remove();
+        }
+
+        function createConfettiPiece() {
+            const colors = ['#ffd700', '#ff0000', '#0000ff', '#00ff00', '#ff00ff', '#00ffff'];
+            const piece = document.createElement('div');
+            piece.className = 'confetti-piece';
+            piece.style.left = Math.random() * 100 + 'vw';
+            piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+            piece.style.animation = `confettiRain ${1 + Math.random() * 2}s linear forwards`;
+            piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+            return piece;
         }
 
         function showConfetti() {
             const confetti = document.querySelector('.confetti');
+            confetti.innerHTML = ''; // Clear any existing confetti
             confetti.classList.add('show');
-            setTimeout(() => confetti.classList.remove('show'), 3000);
+            
+            // Create multiple confetti pieces
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const piece = createConfettiPiece();
+                    confetti.appendChild(piece);
+                    // Remove piece after animation
+                    setTimeout(() => piece.remove(), 3000);
+                }, i * 20);
+            }
+
+            // Stop creating new confetti after 3 seconds
+            setTimeout(() => {
+                confetti.classList.remove('show');
+                confetti.innerHTML = '';
+            }, 4000);
         }
 
         // Add rules popup functions at the start of the script
@@ -858,6 +1398,56 @@
 
         // Call this when the page loads
         window.addEventListener('load', showRulesIfNeeded);
+
+        // Add leaderboard modal functions
+        async function showLeaderboardModal() {
+            const modalOverlay = document.getElementById('leaderboardModalOverlay');
+            const modal = document.getElementById('leaderboardModal');
+            
+            // Fetch latest leaderboard data
+            const leaderboard = await fetchLeaderboard();
+            
+            // Display leaderboard in modal
+            const leaderboardList = document.getElementById('modalLeaderboardList');
+            leaderboardList.innerHTML = '';
+
+            if (leaderboard.length === 0) {
+                leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet today!</li>';
+            } else {
+                leaderboard.forEach((entry, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'leaderboard-item';
+                    
+                    if (index === 0) li.classList.add('gold');
+                    if (index === 1) li.classList.add('silver');
+                    if (index === 2) li.classList.add('bronze');
+
+                    li.innerHTML = `
+                        <span>${index + 1}. ${entry.name}</span>
+                        <span>${entry.moves} moves</span>
+                    `;
+                    leaderboardList.appendChild(li);
+                    
+                    // Add delay to each item's animation
+                    li.style.animationDelay = `${index * 0.1}s`;
+                });
+            }
+
+            // Show modal with animation
+            modalOverlay.classList.add('show');
+            modal.classList.add('show');
+        }
+
+        function hideLeaderboardModal() {
+            const modalOverlay = document.getElementById('leaderboardModalOverlay');
+            const modal = document.getElementById('leaderboardModal');
+            
+            modalOverlay.classList.remove('show');
+            modal.classList.remove('show');
+        }
+
+        // Close modal when clicking overlay
+        document.getElementById('leaderboardModalOverlay').addEventListener('click', hideLeaderboardModal);
     </script>
 </body>
 </html> 

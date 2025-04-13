@@ -1,2 +1,6 @@
 test.html
 temmp_project
+.env
+node_modules/
+.DS_Store
+*.log
