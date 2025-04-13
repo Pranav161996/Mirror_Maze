@@ -164,9 +164,9 @@ app.post('/api/leaderboard', (req, res) => {
 });
 
 // Serve the game
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'play_mirror_maze.html'));
-});
+// app.get('/', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'play_mirror_maze.html'));
+// });
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
