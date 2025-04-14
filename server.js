@@ -226,6 +226,14 @@ app.post('/api/leaderboard', async (req, res) => {
     }
 });
 
+// Import API routes
+import dailyCodeRouter from './api/daily_code.js';
+import leaderboardRouter from './api/leaderboard.js';
+
+// Use API routes
+app.use('/api/daily_code', dailyCodeRouter);
+app.use('/api/leaderboard', leaderboardRouter);
+
 // Serve the game
 // app.get('/', (req, res) => {
 //     res.sendFile(path.join(__dirname, 'play_mirror_maze.html'));

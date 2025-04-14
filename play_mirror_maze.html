@@ -829,6 +829,25 @@
                 height: 14px;
             }
         }
+
+        /* Add styles for the Hall of Fame button */
+        .win-message .game-button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: all 0.2s;
+        }
+
+        .win-message .game-button:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -1202,7 +1221,12 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ name, moves, game: 'Mirror_Maze' })
+                    body: JSON.stringify({
+                        name,
+                        moves: movesCount,
+                        game: 'Mirror_Maze',
+                        binId: '67f912b08a456b7966874534'  // Specify the Mirror Maze leaderboard bin
+                    })
                 });
                 
                 if (!response.ok) throw new Error('Failed to update leaderboard');
@@ -1258,27 +1282,27 @@
 
         // Update the promptForName function
         async function promptForName() {
-            const name = prompt('Congratulations! Enter your name for the leaderboard:');
+            // Double check game is won before prompting
+            if (!gameWon) {
+                console.log('Game not won, skipping name prompt');
+                return;
+            }
+
+            const name = prompt('Enter your name for the Hall of Fame:');
             if (name) {
                 try {
-                    const response = await fetch('/api/leaderboard', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ name, moves: movesCount, game: 'Mirror_Maze' })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Failed to update leaderboard');
+                    await updateLeaderboard(name, movesCount);
+                    // After successful update, refresh the leaderboard display
+                    const leaderboard = await fetchLeaderboard();
+                    displayLeaderboard(leaderboard);
+                    // Hide the "Add Name" button after successful submission
+                    const addNameButton = document.querySelector('.game-button');
+                    if (addNameButton) {
+                        addNameButton.style.display = 'none';
                     }
-                    
-                    const updatedLeaderboard = await response.json();
-                    console.log('Leaderboard updated:', updatedLeaderboard); // Debug log
-                    displayLeaderboard(updatedLeaderboard);
                 } catch (error) {
-                    console.error('Error updating leaderboard:', error);
-                    alert('Failed to update leaderboard. Please try again.');
+                    console.error('Error saving score:', error);
+                    alert('Failed to save score. Please try again.');
                 }
             }
         }
@@ -1302,10 +1326,11 @@
             winMessage.className = 'win-message';
             winMessage.id = 'winMessage';
             
-            // Add content to win message with dismiss button
+            // Add content to win message with Hall of Fame button
             winMessage.innerHTML = `
                 <h2>Congratulations! 🎉</h2>
                 <p>You completed the puzzle in <span id="finalMoves">${movesCount}</span> moves!</p>
+                <button class="game-button" onclick="promptForName()">Add Name to Hall of Fame</button>
                 <div class="leaderboard">
                     <h3>Daily Leaderboard</h3>
                     <ul class="leaderboard-list" id="leaderboardList">
@@ -1328,13 +1353,6 @@
             });
             
             showConfetti();
-            
-            // Wait for animations to complete before showing name prompt
-            if (!gameWon) { // Only prompt for name if not already won
-                setTimeout(() => {
-                    promptForName();
-                }, 1500);
-            }
         }
 
         // Add dismiss function

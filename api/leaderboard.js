@@ -1,13 +1,13 @@
 import fetch from 'node-fetch';
 
 // Helper function to interact with JSONBin
-async function getLeaderboard() {
+async function getLeaderboard(binId) {
     try {
-        if (!process.env.JSONBIN_BIN_ID || !process.env.JSONBIN_API_KEY) {
-            throw new Error('Missing required environment variables');
+        if (!binId || !process.env.JSONBIN_API_KEY) {
+            throw new Error('Missing required parameters');
         }
 
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${process.env.JSONBIN_BIN_ID}`, {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
             headers: {
                 'X-Master-Key': process.env.JSONBIN_API_KEY
             }
@@ -22,17 +22,17 @@ async function getLeaderboard() {
         return Array.isArray(data.record) ? data.record : [];
     } catch (error) {
         console.error('Error fetching from JSONBin:', error);
-        throw error; // Re-throw to handle in the main handler
+        throw error;
     }
 }
 
-async function updateLeaderboard(leaderboard) {
+async function updateLeaderboard(leaderboard, binId) {
     try {
-        if (!process.env.JSONBIN_BIN_ID || !process.env.JSONBIN_API_KEY) {
-            throw new Error('Missing required environment variables');
+        if (!binId || !process.env.JSONBIN_API_KEY) {
+            throw new Error('Missing required parameters');
         }
 
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${process.env.JSONBIN_BIN_ID}`, {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ async function updateLeaderboard(leaderboard) {
         return true;
     } catch (error) {
         console.error('Error updating JSONBin:', error);
-        throw error; // Re-throw to handle in the main handler
+        throw error;
     }
 }
 
@@ -82,12 +82,11 @@ export default async function handler(req, res) {
     try {
         // Log environment variables (without revealing sensitive data)
         console.log('Environment check:', {
-            JSONBIN_BIN_ID: process.env.JSONBIN_BIN_ID ? 'Set' : 'Not set',
             JSONBIN_API_KEY: process.env.JSONBIN_API_KEY ? 'Set' : 'Not set'
         });
 
         // Check environment variables
-        if (!process.env.JSONBIN_BIN_ID || !process.env.JSONBIN_API_KEY) {
+        if (!process.env.JSONBIN_API_KEY) {
             console.error('Missing required environment variables');
             return res.status(500).json({ 
                 error: 'Server configuration error',
@@ -97,14 +96,20 @@ export default async function handler(req, res) {
 
         if (req.method === 'GET') {
             console.log('Processing GET request');
-            // Parse game name from query, URL params, or default
             const gameName = (req.query && req.query.game) || 'Mirror_Maze';
-            console.log('Game name:', gameName);
+            const binId = req.query.binId;
+            console.log('Game name:', gameName, 'Bin ID:', binId);
 
-            const leaderboard = await getLeaderboard();
+            if (!binId) {
+                return res.status(400).json({ 
+                    error: 'Missing required parameter',
+                    details: 'binId is required'
+                });
+            }
+
+            const leaderboard = await getLeaderboard(binId);
             console.log('Fetched leaderboard entries:', leaderboard.length);
 
-            // Filter by game name and sort by moves
             const scores = leaderboard
                 .filter(entry => entry.game === gameName)
                 .sort((a, b) => a.moves - b.moves)
@@ -117,17 +122,17 @@ export default async function handler(req, res) {
             console.log('Processing POST request');
             console.log('Request body:', req.body);
 
-            const { name, moves, game = 'Mirror_Maze' } = req.body;
+            const { name, moves, game = 'Mirror_Maze', binId } = req.body;
 
-            if (!name || typeof moves !== 'number' || !game) {
-                console.error('Invalid score data:', { name, moves, game });
+            if (!name || typeof moves !== 'number' || !game || !binId) {
+                console.error('Invalid score data:', { name, moves, game, binId });
                 return res.status(400).json({ 
                     error: 'Invalid score data',
-                    details: 'Name, moves (number), and game are required'
+                    details: 'Name, moves (number), game, and binId are required'
                 });
             }
 
-            const leaderboard = await getLeaderboard();
+            const leaderboard = await getLeaderboard(binId);
             const today = new Date().toDateString();
             const newEntry = {
                 name,
@@ -139,18 +144,13 @@ export default async function handler(req, res) {
 
             console.log('New entry:', newEntry);
 
-            // Filter out old entries from the same player for the same game
             const filteredLeaderboard = leaderboard.filter(entry => 
                 !(entry.game === game && entry.name === name)
             );
 
-            // Add new entry
             filteredLeaderboard.push(newEntry);
+            await updateLeaderboard(filteredLeaderboard, binId);
 
-            // Update JSONBin
-            await updateLeaderboard(filteredLeaderboard);
-
-            // Get scores for this game only
             const scores = filteredLeaderboard
                 .filter(entry => entry.game === game)
                 .sort((a, b) => a.moves - b.moves)
