@@ -694,6 +694,37 @@
                 submitGuess();
             }
         });
+
+        async function startNewGame() {
+            try {
+                // Fetch today's code from the API
+                const response = await fetch('/api/daily_code');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch daily code');
+                }
+                const data = await response.json();
+                dailyCode = data.code;
+                
+                // Reset game state
+                currentGuess = '';
+                guesses = [];
+                feedback = [];
+                moves = 0;
+                
+                // Update UI
+                updateGuessesDisplay();
+                updateFeedbackDisplay();
+                updateMovesDisplay();
+                
+                // Show game board
+                document.getElementById('game-board').style.display = 'block';
+                document.getElementById('game-over').style.display = 'none';
+                
+            } catch (error) {
+                console.error('Error starting new game:', error);
+                alert('Failed to start new game. Please try again later.');
+            }
+        }
     </script>
 </body>
 </html> 
