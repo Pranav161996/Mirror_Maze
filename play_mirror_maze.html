@@ -41,6 +41,7 @@
             border-radius: 0;
             box-shadow: none;
             min-height: 0;
+            position: relative;
         }
 
         .game-header {
@@ -502,360 +503,67 @@
             }
         }
 
-        /* Add rules popup styles */
-        .rules-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-
-        .rules-content {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            max-width: 90%;
-            width: 500px;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        .rules-image {
-            width: 100%;
-            height: auto;
-            margin: 20px 0;
-            border-radius: 10px;
-        }
-
-        .close-rules {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
-            padding: 5px;
-            line-height: 1;
-        }
-
-        .continue-button {
-            background: #4a90e2;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            display: block;
-            margin: 20px auto 0;
-            transition: all 0.2s;
-        }
-
-        .continue-button:hover {
-            background: #357abd;
-            transform: translateY(-2px);
-        }
-
-        /* Add leaderboard styles */
-        .leaderboard {
+        /* Add styles for How to Play section */
+        .how-to-play {
             background: white;
             padding: 20px;
             border-radius: 15px;
-            margin-top: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            max-width: 400px;
+            margin: 20px auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 500px;
             width: 90%;
-            position: relative;
-            overflow: hidden;
         }
 
-        .leaderboard h3 {
-            margin: 0 0 15px;
-            color: #333;
-            font-size: 20px;
-            text-align: center;
-        }
-
-        .leaderboard-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .leaderboard-item {
+        .how-to-play-header {
             display: flex;
             justify-content: space-between;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 8px;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
             background: #f8f8f8;
-            font-size: 16px;
-            transform: translateX(-100%);
-            opacity: 0;
-            animation: slideIn 0.5s forwards;
+            border-radius: 8px;
+            margin-bottom: 10px;
         }
 
-        @keyframes slideIn {
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .leaderboard-item.new-entry {
-            background: #e6f7ff;
-            animation: highlightEntry 2s ease-in-out;
-        }
-
-        @keyframes highlightEntry {
-            0% {
-                background: #ffd700;
-                transform: scale(1.05);
-            }
-            50% {
-                background: #e6f7ff;
-                transform: scale(1.02);
-            }
-            100% {
-                background: #e6f7ff;
-                transform: scale(1);
-            }
-        }
-
-        .rank-badge {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #4a90e2;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-weight: bold;
-            opacity: 0;
-            animation: fadeInDown 0.5s forwards;
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -20px);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, 0);
-            }
-        }
-
-        .leaderboard-item:nth-child(1) {
-            background: #ffd700;
-            color: #000;
-            font-weight: bold;
-        }
-
-        .leaderboard-item:nth-child(2) {
-            background: #c0c0c0;
-            color: #000;
-        }
-
-        .leaderboard-item:nth-child(3) {
-            background: #cd7f32;
-            color: #000;
-        }
-
-        .win-message {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        /* Update existing win-message styles */
-        .win-message {
-            width: 90%;
-            max-width: 400px;
-            padding: 30px;
-        }
-
-        @media (max-width: 768px) {
-            .leaderboard {
-                margin: 15px auto;
-            }
-        }
-
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1001;
-            display: none;
-        }
-
-        .confetti.show {
-            display: block;
-        }
-
-        .confetti-piece {
-            position: absolute;
-            width: 10px;
-            height: 30px;
-            background: #ffd700;
-            top: 0;
-            opacity: 0;
-        }
-
-        @keyframes confettiRain {
-            0% {
-                opacity: 1;
-                transform: translateY(0) rotateX(0) rotateY(0);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(100vh) rotateX(360deg) rotateY(360deg);
-            }
-        }
-
-        .dismiss-button {
-            background: #4a90e2;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 16px;
-            margin-top: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .dismiss-button:hover {
-            background: #357abd;
-            transform: translateY(-2px);
-        }
-
-        .leaderboard-button {
-            background: #4a90e2;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .leaderboard-button:hover {
-            background: #357abd;
-            transform: translateY(-2px);
-        }
-
-        .leaderboard-button svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        .leaderboard-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 1000;
-            width: 90%;
-            max-width: 400px;
-            display: none;
-        }
-
-        .leaderboard-modal.show {
-            display: block;
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .leaderboard-modal h2 {
+        .how-to-play-header h3 {
+            margin: 0;
             color: #333;
-            font-size: 24px;
-            margin: 0 0 20px;
-            text-align: center;
+            font-size: 18px;
         }
 
-        .leaderboard-modal .close-button {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
-            padding: 5px;
-            line-height: 1;
-        }
-
-        .leaderboard-modal .close-button:hover {
-            color: #333;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+        .how-to-play-content {
             display: none;
-            z-index: 999;
+            padding: 10px;
+            color: #444;
+            line-height: 1.6;
         }
 
-        .modal-overlay.show {
+        .how-to-play-content.show {
             display: block;
+            animation: fadeIn 0.3s ease-in-out;
         }
 
-        @media (max-width: 768px) {
-            .leaderboard-button {
-                padding: 6px 12px;
-                font-size: 14px;
-            }
-
-            .leaderboard-button svg {
-                width: 14px;
-                height: 14px;
-            }
+        .how-to-play ul {
+            padding-left: 20px;
+            margin: 10px 0;
         }
 
-        /* Add these new styles */
-        canvas {
-            touch-action: none;
-            -webkit-tap-highlight-color: transparent;
+        .how-to-play li {
+            margin-bottom: 8px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Update existing styles */
+        .game-content {
+            position: relative;
         }
     </style>
 </head>
 <body>
-    <!-- Add rules popup HTML -->
-    <div class="rules-popup" id="rulesPopup">
-        <div class="rules-content">
-            <button class="close-rules" onclick="closeRules()">×</button>
-            <img src="/rules.png" alt="Mirror Maze Rules" class="rules-image">
-            <button class="continue-button" onclick="closeRules()">Continue</button>
-        </div>
-    </div>
-
     <div class="game-container">
         <div class="game-content">
             <div class="game-header">
@@ -871,6 +579,34 @@
                     <button class="reset-button" onclick="resetGame()">Reset (+5)</button>
                 </div>
             </div>
+
+            <!-- Add How to Play section -->
+            <div class="how-to-play">
+                <div class="how-to-play-header" onclick="toggleHowToPlay()">
+                    <h3>How to Play</h3>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="how-to-play-content" id="howToPlayContent">
+                    <ul>
+                        <li><strong>Goal:</strong> Guide both colored balls to their matching colored targets.</li>
+                        <li><strong>Movement:</strong> When you move in any direction:
+                            <ul>
+                                <li>Red ball moves in the direction you choose</li>
+                                <li>Blue ball moves in the opposite direction</li>
+                            </ul>
+                        </li>
+                        <li><strong>Controls:</strong>
+                            <ul>
+                                <li>Use arrow keys on desktop</li>
+                                <li>Use on-screen arrows on mobile</li>
+                            </ul>
+                        </li>
+                        <li><strong>Reset:</strong> You can reset positions at any time (+5 moves penalty)</li>
+                        <li><strong>Win:</strong> Get both balls to their targets in the fewest moves possible!</li>
+                    </ul>
+                </div>
+            </div>
+
             <div class="map-container" id="mapContainer"></div>
         </div>
         <div class="controls">
@@ -979,17 +715,18 @@
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
-            return `mirror_maze_${year}-${month}-${day}.json`;
+            return `./mirror_maze_${year}-${month}-${day}.json`;
         }
 
         function loadPuzzle() {
             gameWon = false; // Reset game state when loading new puzzle
             const puzzleFile = urlParams.get('puzzle') || getTodayPuzzleFile();
             
-            // First try to load from the current directory
+            // Try to load from the local directory
             fetch(puzzleFile)
                 .then(response => {
                     if (!response.ok) {
+                        console.warn(`Failed to load puzzle from ${puzzleFile}, using default puzzle`);
                         throw new Error('Failed to load puzzle file');
                     }
                     return response.json();
@@ -1189,15 +926,15 @@
             }
         });
 
-        // Add these functions to handle leaderboard
+        // Update the leaderboard functions
         async function fetchLeaderboard() {
             try {
                 const response = await fetch(`/api/leaderboard?game=Mirror_Maze&binId=${MIRROR_MAZE_BIN_ID}`);
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Failed to fetch leaderboard: ${response.status} - ${errorText}`);
+                    throw new Error(`Failed to fetch leaderboard: ${response.status}`);
                 }
-                return await response.json();
+                const data = await response.json();
+                return data;
             } catch (error) {
                 console.error('Error fetching leaderboard:', error);
                 return [];
@@ -1220,138 +957,76 @@
                 });
 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Failed to submit score: ${response.status} - ${errorText}`);
+                    throw new Error(`Failed to submit score: ${response.status}`);
                 }
 
-                return true;
+                const data = await response.json();
+                return data;
             } catch (error) {
                 console.error('Error submitting score:', error);
-                return false;
+                throw error;
             }
         }
 
-        function displayLeaderboard(leaderboard) {
-            const leaderboardList = document.getElementById('leaderboardList');
-            leaderboardList.innerHTML = '';
+        async function showLeaderboardModal() {
+            const modalOverlay = document.getElementById('leaderboardModalOverlay');
+            const modal = document.getElementById('leaderboardModal');
+            
+            try {
+                const leaderboard = await fetchLeaderboard();
+                const leaderboardList = document.getElementById('modalLeaderboardList');
+                leaderboardList.innerHTML = '';
 
-            if (leaderboard.length === 0) {
-                leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet today!</li>';
-                return;
-            }
+                if (!leaderboard || leaderboard.length === 0) {
+                    leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet today!</li>';
+                } else {
+                    leaderboard.forEach((entry, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'leaderboard-item';
+                        
+                        if (index === 0) li.classList.add('gold');
+                        if (index === 1) li.classList.add('silver');
+                        if (index === 2) li.classList.add('bronze');
 
-            // Find the latest entry (assuming it's the last one in the array)
-            const latestEntry = leaderboard[leaderboard.length - 1];
-            const latestTimestamp = latestEntry.timestamp;
-
-            leaderboard.forEach((entry, index) => {
-                const li = document.createElement('li');
-                li.className = 'leaderboard-item';
-                
-                // Add special styling for top 3
-                if (index === 0) li.classList.add('gold');
-                if (index === 1) li.classList.add('silver');
-                if (index === 2) li.classList.add('bronze');
-
-                // Add new-entry class if this is the latest entry
-                if (entry.timestamp === latestTimestamp) {
-                    li.classList.add('new-entry');
-                    // Add rank badge
-                    const rankBadge = document.createElement('div');
-                    rankBadge.className = 'rank-badge';
-                    rankBadge.textContent = `Rank #${index + 1}`;
-                    li.appendChild(rankBadge);
-                }
-
-                li.innerHTML = `
-                    <span>${index + 1}. ${entry.name}</span>
-                    <span>${entry.moves} moves</span>
-                `;
-                leaderboardList.appendChild(li);
-
-                // Add delay to each item's animation
-                li.style.animationDelay = `${index * 0.1}s`;
-            });
-        }
-
-        // Update the promptForName function
-        async function promptForName() {
-            const name = prompt('Congratulations! Enter your name for the leaderboard:');
-            if (name) {
-                try {
-                    const response = await fetch('/api/leaderboard', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ name, moves: movesCount })
+                        li.innerHTML = `
+                            <span>${index + 1}. ${entry.name}</span>
+                            <span>${entry.moves} moves</span>
+                        `;
+                        leaderboardList.appendChild(li);
+                        
+                        li.style.animationDelay = `${index * 0.1}s`;
                     });
-                    
-                    if (!response.ok) {
-                        throw new Error('Failed to update leaderboard');
-                    }
-                    
-                    const updatedLeaderboard = await response.json();
-                    console.log('Leaderboard updated:', updatedLeaderboard); // Debug log
-                    displayLeaderboard(updatedLeaderboard);
-                } catch (error) {
-                    console.error('Error updating leaderboard:', error);
-                    alert('Failed to update leaderboard. Please try again.');
                 }
+
+                modalOverlay.classList.add('show');
+                modal.classList.add('show');
+            } catch (error) {
+                console.error('Error displaying leaderboard:', error);
+                alert('Failed to load leaderboard. Please try again.');
             }
         }
 
-        // Update showWinMessage to include a dismiss button
-        async function showWinMessage() {
-            // Remove any existing win message elements
-            const existingOverlay = document.getElementById('winOverlay');
-            const existingMessage = document.getElementById('winMessage');
-            if (existingOverlay) existingOverlay.remove();
-            if (existingMessage) existingMessage.remove();
+        async function addToLeaderboard() {
+            const name = prompt('Enter your name for the leaderboard:');
+            if (!name) return;
 
-            // Create overlay
-            const winOverlay = document.createElement('div');
-            winOverlay.className = 'win-overlay';
-            winOverlay.id = 'winOverlay';
-            document.body.appendChild(winOverlay);
-
-            // Create win message container
-            const winMessage = document.createElement('div');
-            winMessage.className = 'win-message';
-            winMessage.id = 'winMessage';
-            
-            // Add content to win message with dismiss button
-            winMessage.innerHTML = `
-                <h2>Congratulations! 🎉</h2>
-                <p>You completed the puzzle in <span id="finalMoves">${movesCount}</span> moves!</p>
-                <div class="leaderboard">
-                    <h3>Daily Leaderboard</h3>
-                    <ul class="leaderboard-list" id="leaderboardList">
-                        <!-- Leaderboard items will be inserted here -->
-                    </ul>
-                </div>
-                <button class="dismiss-button" onclick="dismissWinMessage()">Close</button>
-            `;
-            
-            document.body.appendChild(winMessage);
-            
-            // Fetch and display leaderboard
-            const leaderboard = await fetchLeaderboard();
-            displayLeaderboard(leaderboard);
-            
-            // Show the elements with animation
-            requestAnimationFrame(() => {
-                winOverlay.classList.add('show');
-                winMessage.classList.add('show');
-            });
-            
-            showConfetti();
-            
-            // Wait for animations to complete before showing name prompt
-            if (!gameWon) { // Only prompt for name if not already won
-                setTimeout(() => {
-                    promptForName();
-                }, 1500);
+            try {
+                const updatedLeaderboard = await submitScore(name, movesCount);
+                
+                // Update leaderboard display
+                const leaderboardList = document.getElementById('modalLeaderboardList');
+                if (leaderboardList) {
+                    showLeaderboardModal();
+                }
+                
+                // Hide the "Add to Leaderboard" button
+                const addButton = document.querySelector('.game-button');
+                if (addButton) {
+                    addButton.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error adding score to leaderboard:', error);
+                alert('Failed to add score to leaderboard. Please try again.');
             }
         }
 
@@ -1397,64 +1072,6 @@
             }, 4000);
         }
 
-        // Add rules popup functions at the start of the script
-        function closeRules() {
-            document.getElementById('rulesPopup').style.display = 'none';
-            // Store that the user has seen the rules
-            localStorage.setItem('mirrorMazeRulesSeen', 'true');
-        }
-
-        function showRulesIfNeeded() {
-            const rulesSeen = localStorage.getItem('mirrorMazeRulesSeen');
-            if (!rulesSeen) {
-                document.getElementById('rulesPopup').style.display = 'flex';
-            } else {
-                document.getElementById('rulesPopup').style.display = 'none';
-            }
-        }
-
-        // Call this when the page loads
-        window.addEventListener('load', showRulesIfNeeded);
-
-        // Add leaderboard modal functions
-        async function showLeaderboardModal() {
-            const modalOverlay = document.getElementById('leaderboardModalOverlay');
-            const modal = document.getElementById('leaderboardModal');
-            
-            // Fetch latest leaderboard data
-            const leaderboard = await fetchLeaderboard();
-            
-            // Display leaderboard in modal
-            const leaderboardList = document.getElementById('modalLeaderboardList');
-            leaderboardList.innerHTML = '';
-
-            if (leaderboard.length === 0) {
-                leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet today!</li>';
-            } else {
-                leaderboard.forEach((entry, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'leaderboard-item';
-                    
-                    if (index === 0) li.classList.add('gold');
-                    if (index === 1) li.classList.add('silver');
-                    if (index === 2) li.classList.add('bronze');
-
-                    li.innerHTML = `
-                        <span>${index + 1}. ${entry.name}</span>
-                        <span>${entry.moves} moves</span>
-                    `;
-                    leaderboardList.appendChild(li);
-                    
-                    // Add delay to each item's animation
-                    li.style.animationDelay = `${index * 0.1}s`;
-                });
-            }
-
-            // Show modal with animation
-            modalOverlay.classList.add('show');
-            modal.classList.add('show');
-        }
-
         function hideLeaderboardModal() {
             const modalOverlay = document.getElementById('leaderboardModalOverlay');
             const modal = document.getElementById('leaderboardModal');
@@ -1465,6 +1082,14 @@
 
         // Close modal when clicking overlay
         document.getElementById('leaderboardModalOverlay').addEventListener('click', hideLeaderboardModal);
+
+        // Add How to Play toggle function
+        function toggleHowToPlay() {
+            const content = document.getElementById('howToPlayContent');
+            const toggleIcon = document.querySelector('.toggle-icon');
+            content.classList.toggle('show');
+            toggleIcon.textContent = content.classList.contains('show') ? '▲' : '▼';
+        }
     </script>
 </body>
 </html> 

@@ -93,11 +93,18 @@ export default async function handler(req, res) {
 
             const data = await response.json();
             const today = new Date().toISOString().split('T')[0];
-            const scores = data.record[today] || [];
+            
+            // Handle both array and object data structures
+            let scores = [];
+            if (Array.isArray(data.record)) {
+                scores = data.record;
+            } else if (typeof data.record === 'object') {
+                scores = data.record[today] || [];
+            }
 
             // Filter scores for the specific game and sort by moves
             const gameScores = scores
-                .filter(score => score.game === game)
+                .filter(score => score && score.game === game)
                 .sort((a, b) => a.moves - b.moves);
 
             return res.status(200).json(gameScores);
