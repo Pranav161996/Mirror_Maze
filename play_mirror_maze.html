@@ -1277,28 +1277,33 @@
 
         // Update the promptForName function
         async function promptForName() {
-            const name = prompt('Congratulations! Enter your name for the leaderboard:');
-            if (name) {
-                try {
-                    const response = await fetch('/api/leaderboard', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ name, moves: movesCount })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Failed to update leaderboard');
-                    }
-                    
-                    const updatedLeaderboard = await response.json();
-                    console.log('Leaderboard updated:', updatedLeaderboard); // Debug log
-                    displayLeaderboard(updatedLeaderboard);
-                } catch (error) {
-                    console.error('Error updating leaderboard:', error);
-                    alert('Failed to update leaderboard. Please try again.');
+            const name = prompt('Enter your name for the Hall of Fame:');
+            if (!name) return;
+
+            try {
+                const response = await fetch('/api/leaderboard', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        moves: movesCount,
+                        game: 'Mirror_Maze',
+                        binId: '67f912b08a456b7966874534'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to submit score');
                 }
+
+                const leaderboard = await response.json();
+                displayLeaderboard(leaderboard);
+                gameWon = true; // Mark game as won after submitting score
+            } catch (error) {
+                console.error('Error saving score:', error);
+                alert('Failed to save score. Please try again.');
             }
         }
 
@@ -1331,7 +1336,10 @@
                         <!-- Leaderboard items will be inserted here -->
                     </ul>
                 </div>
-                <button class="dismiss-button" onclick="dismissWinMessage()">Close</button>
+                <div class="button-container">
+                    <button class="submit-button" onclick="promptForName()">Add Name to Hall of Fame</button>
+                    <button class="dismiss-button" onclick="dismissWinMessage()">Close</button>
+                </div>
             `;
             
             document.body.appendChild(winMessage);
@@ -1347,13 +1355,6 @@
             });
             
             showConfetti();
-            
-            // Wait for animations to complete before showing name prompt
-            if (!gameWon) { // Only prompt for name if not already won
-                setTimeout(() => {
-                    promptForName();
-                }, 1500);
-            }
         }
 
         // Add dismiss function

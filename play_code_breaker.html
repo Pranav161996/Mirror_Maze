@@ -460,58 +460,52 @@
     </div>
 
     <script>
+        // Game state
         let movesCount = 0;
         let gameWon = false;
-        let apiKey = null;
-        const CODE_BREAKER_BIN_ID = '67fca1278960c979a5849c70';
+        let guesses = [];
+        let feedback = [];
+        let code = '';
 
-        // Base URL for API calls
-        const BASE_URL = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
-
-        // Fetch API key on page load
-        async function fetchApiKey() {
-            try {
-                const response = await fetch(`${BASE_URL}/api/config`);
-                if (!response.ok) throw new Error('Failed to fetch config');
-                const config = await response.json();
-                apiKey = config.apiKey;
-            } catch (error) {
-                console.error('Error fetching API key:', error);
-            }
+        // Utility function to generate a hash (using SHA-256)
+        async function sha256(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hashBuffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
         }
 
-        async function getDailyCode() {
-            try {
-                const response = await fetch('/api/daily_code');
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch daily code: ${response.status} ${response.statusText}`);
+        // Generate daily code deterministically
+        async function generateDailyCode(dateStr) {
+            const hash = await sha256(dateStr);
+            
+            // Use first 10 characters of hash to generate 5 digits
+            let code = '';
+            let usedDigits = new Set();
+            let i = 0;
+            
+            while (code.length < 5) {
+                // Get two characters from hash and convert to number between 0-9
+                const num = parseInt(hash.substr(i * 2, 2), 16) % 10;
+                
+                // If this digit is already used, increment until we find an unused one
+                let finalNum = num;
+                while (usedDigits.has(finalNum)) {
+                    finalNum = (finalNum + 1) % 10;
                 }
-                const data = await response.json();
-                return data.code;
-            } catch (error) {
-                console.error('Error getting daily code:', error);
-                throw error;
+                
+                usedDigits.add(finalNum);
+                code += finalNum;
+                i++;
             }
+            
+            return code;
         }
 
-        async function submitGuess() {
-            if (gameWon) return;
-
-            const input = document.getElementById('guessInput');
-            const guess = input.value.padStart(5, '0');
-
-            if (guess.length !== 5 || !/^\d+$/.test(guess)) {
-                alert('Please enter a 5-digit number');
-                return;
-            }
-
-            // Check for duplicate digits
-            const uniqueDigits = new Set(guess.split(''));
-            if (uniqueDigits.size !== 5) {
-                alert('Please enter a 5-digit number with all unique digits');
-                return;
-            }
-
+        // Validate guess with the server
+        async function validateGuess(guess) {
             try {
                 const response = await fetch('/api/validate_guess', {
                     method: 'POST',
@@ -527,7 +521,50 @@
                 }
 
                 const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error validating guess:', error);
+                throw error;
+            }
+        }
+        
+        // Initialize game
+        async function initGame() {
+            movesCount = 0;
+            gameWon = false;
+            guesses.length = 0;
+            feedback.length = 0;
+            document.getElementById('movesCount').textContent = '0';
+            document.getElementById('guessesList').innerHTML = '';
+            const today = new Date().toISOString().split('T')[0];
+            await generateDailyCode(today);
+        }
+
+        // Handle guess submission
+        async function submitGuess() {
+            if (gameWon) return;
+
+            const guessInput = document.getElementById('guessInput');
+            const guess = guessInput.value.trim();
+
+            if (!/^\d{5}$/.test(guess)) {
+                alert('Please enter a 5-digit number');
+                return;
+            }
+
+            // Check for duplicate digits
+            if (new Set(guess.split('')).size !== 5) {
+                alert('All digits must be different');
+                return;
+            }
+
+            try {
+                const result = await validateGuess(guess);
                 movesCount++;
+                guesses.push(guess);
+                feedback.push(result);
+                
+                // Update moves counter
                 document.getElementById('movesCount').textContent = movesCount;
 
                 // Add guess to list
@@ -537,56 +574,73 @@
                 li.innerHTML = `
                     <span class="guess-number">${guess}</span>
                     <div class="guess-feedback">
-                        ${data.correctPosition > 0 ? 
+                        ${result.correctPosition > 0 ? 
                             `<span class="feedback-item correct-position">
-                                ${data.correctPosition} correct position${data.correctPosition > 1 ? 's' : ''}
+                                ${result.correctPosition} correct position${result.correctPosition > 1 ? 's' : ''}
                             </span>` : ''
                         }
-                        ${data.correctDigit > 0 ? 
+                        ${result.correctDigit > 0 ? 
                             `<span class="feedback-item correct-digit">
-                                ${data.correctDigit} correct digit${data.correctDigit > 1 ? 's' : ''}
+                                ${result.correctDigit} correct digit${result.correctDigit > 1 ? 's' : ''}
                             </span>` : ''
                         }
-                        ${data.correctPosition === 0 && data.correctDigit === 0 ? 
+                        ${result.correctPosition === 0 && result.correctDigit === 0 ? 
                             '<span class="feedback-item">No matches</span>' : ''
                         }
                     </div>
                 `;
                 guessList.insertBefore(li, guessList.firstChild);
-
-                // Clear input
-                input.value = '';
-
-                // Check for win
-                if (data.isCorrect) {
+                
+                if (result.isCorrect) {
                     gameWon = true;
                     showWinMessage();
                 }
+                
+                guessInput.value = '';
             } catch (error) {
-                console.error('Error submitting guess:', error);
-                alert('Failed to submit guess. Please try again.');
+                alert('Error submitting guess: ' + error.message);
             }
         }
 
+        function showWinMessage() {
+            document.getElementById('finalMoves').textContent = movesCount;
+            document.getElementById('winOverlay').classList.add('show');
+            document.getElementById('winMessage').classList.add('show');
+            document.querySelector('.win-message h2').textContent = 'Congratulations!';
+            document.querySelector('.win-message p').style.display = 'block';
+            document.querySelector('.button-container .submit-button').style.display = 'block';
+            fetchLeaderboard().then(displayLeaderboard);
+        }
+
+        function dismissWinMessage() {
+            document.getElementById('winOverlay').classList.remove('show');
+            document.getElementById('winMessage').classList.remove('show');
+            startNewGame(); // Start a new game when dismissing the win message
+        }
+
+        function toggleInstructions() {
+            const content = document.getElementById('instructionsContent');
+            const toggle = document.querySelector('.instructions-toggle');
+            content.classList.toggle('expanded');
+            toggle.style.transform = content.classList.contains('expanded') ? 'rotate(180deg)' : '';
+        }
+
+        // Handle Enter key in input
+        document.getElementById('guessInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitGuess();
+            }
+        });
+
+        // Initialize the game when the page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+
+        // Leaderboard functions
         async function fetchLeaderboard() {
-            if (!apiKey) {
-                await fetchApiKey();
-            }
-
-            if (!apiKey) {
-                console.error('API key not available');
-                return [];
-            }
-
             try {
-                const response = await fetch(`${BASE_URL}/api/leaderboard?game=Code_Breaker&binId=${CODE_BREAKER_BIN_ID}`, {
-                    headers: {
-                        'X-Master-Key': apiKey
-                    }
-                });
+                const response = await fetch(`/api/leaderboard?game=Code_Breaker&binId=67f912b08a456b7966874534`);
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Failed to fetch leaderboard: ${response.status} - ${errorText}`);
+                    throw new Error('Failed to fetch leaderboard');
                 }
                 return await response.json();
             } catch (error) {
@@ -615,128 +669,75 @@
             });
         }
 
-        function showWinMessage() {
-            document.getElementById('finalMoves').textContent = movesCount;
-            document.getElementById('winOverlay').classList.add('show');
-            document.getElementById('winMessage').classList.add('show');
-            document.querySelector('.win-message h2').textContent = 'Congratulations! 🎉';
-            document.querySelector('.win-message p').style.display = 'block';
-            document.querySelector('.button-container .submit-button').style.display = 'block';
-            fetchLeaderboard().then(displayLeaderboard);
-        }
-
-        function showLeaderboard() {
+        async function showLeaderboard() {
             document.getElementById('winOverlay').classList.add('show');
             document.getElementById('winMessage').classList.add('show');
             document.querySelector('.win-message h2').textContent = 'Daily Leaderboard';
             document.querySelector('.win-message p').style.display = 'none';
             document.querySelector('.button-container .submit-button').style.display = 'none';
-            fetchLeaderboard().then(displayLeaderboard);
-        }
-
-        function dismissWinMessage() {
-            document.getElementById('winOverlay').classList.remove('show');
-            document.getElementById('winMessage').classList.remove('show');
+            const leaderboard = await fetchLeaderboard();
+            displayLeaderboard(leaderboard);
         }
 
         async function promptForName() {
             const name = prompt('Enter your name for the Hall of Fame:');
             if (!name) return;
 
-            if (!apiKey) {
-                await fetchApiKey();
-            }
-
-            if (!apiKey) {
-                alert('Unable to connect to leaderboard. Please try again later.');
-                return;
-            }
-
             try {
-                const response = await fetch(`${BASE_URL}/api/leaderboard`, {
+                const response = await fetch('/api/leaderboard', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': apiKey
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         name,
                         moves: movesCount,
                         game: 'Code_Breaker',
-                        binId: CODE_BREAKER_BIN_ID
+                        binId: '67f912b08a456b7966874534'
                     })
                 });
-                
+
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Failed to update leaderboard: ${response.status} - ${errorText}`);
+                    throw new Error('Failed to submit score');
                 }
-                
+
                 const leaderboard = await response.json();
                 displayLeaderboard(leaderboard);
-                
+
                 // Hide the "Add Name" button after successful submission
-                const addNameButton = document.querySelector('.submit-button');
-                if (addNameButton) {
-                    addNameButton.style.display = 'none';
-                }
+                document.querySelector('.button-container .submit-button').style.display = 'none';
             } catch (error) {
                 console.error('Error saving score:', error);
                 alert('Failed to save score. Please try again.');
             }
         }
 
-        function toggleInstructions() {
-            const content = document.getElementById('instructionsContent');
-            const toggle = document.querySelector('.instructions-toggle');
-            content.classList.toggle('expanded');
-            toggle.style.transform = content.classList.contains('expanded') ? 'rotate(180deg)' : '';
-        }
-
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', function() {
-            fetchApiKey();
-            // Start with collapsed instructions on mobile, expanded on desktop
-            if (window.innerWidth > 768) {
-                toggleInstructions();
-            }
-        });
-
-        // Handle Enter key in input
-        document.getElementById('guessInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                submitGuess();
-            }
-        });
-
         async function startNewGame() {
             try {
-                // Fetch today's code from the API
                 const response = await fetch('/api/daily_code');
                 if (!response.ok) {
                     throw new Error('Failed to fetch daily code');
                 }
                 const data = await response.json();
-                dailyCode = data.code;
+                code = data.code;
                 
                 // Reset game state
-                currentGuess = '';
+                movesCount = 0;
+                gameWon = false;
                 guesses = [];
                 feedback = [];
-                moves = 0;
                 
                 // Update UI
-                updateGuessesDisplay();
-                updateFeedbackDisplay();
-                updateMovesDisplay();
+                document.getElementById('guessInput').value = '';
+                document.getElementById('guessesList').innerHTML = '';
+                document.getElementById('movesCount').textContent = '0';
                 
-                // Show game board
-                document.getElementById('game-board').style.display = 'block';
-                document.getElementById('game-over').style.display = 'none';
-                
+                // Hide win message if it's showing
+                document.getElementById('winOverlay').classList.remove('show');
+                document.getElementById('winMessage').classList.remove('show');
             } catch (error) {
                 console.error('Error starting new game:', error);
-                alert('Failed to start new game. Please try again later.');
+                alert('Failed to start game. Please try refreshing the page.');
             }
         }
     </script>

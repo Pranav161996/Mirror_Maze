@@ -1,6 +1,4 @@
-import fetch from 'node-fetch';
-
-const CODE_BREAKER_BIN_ID = '67f912b08a456b7966874534';
+import { generateDailyCode } from './daily_code';
 
 export default async function handler(req, res) {
     // Set CORS headers
@@ -14,80 +12,63 @@ export default async function handler(req, res) {
     }
 
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        res.setHeader('Allow', ['POST']);
+        return res.status(405).end(`Method ${req.method} Not Allowed`);
     }
 
     try {
         const { guess } = req.body;
         
-        if (!guess || typeof guess !== 'string' || guess.length !== 5 || !/^\d{5}$/.test(guess)) {
-            return res.status(400).json({ error: 'Invalid guess format. Must be a 5-digit number.' });
+        // Validate input
+        if (!guess || !/^\d{5}$/.test(guess)) {
+            return res.status(400).json({ error: 'Invalid guess format. Must be 5 digits.' });
+        }
+
+        // Check for duplicate digits
+        if (new Set(guess.split('')).size !== 5) {
+            return res.status(400).json({ error: 'All digits must be different.' });
         }
 
         // Get today's code
-        const apiKey = process.env.JSONBIN_API_KEY;
-        if (!apiKey) {
-            throw new Error('JSONBIN_API_KEY environment variable is not set');
-        }
-
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Fetch current data from JSONBin
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${CODE_BREAKER_BIN_ID}/latest`, {
-            headers: {
-                'X-Master-Key': apiKey
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`JSONBin API error: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        const dailyCode = data.record[today];
-
-        if (!dailyCode) {
-            return res.status(404).json({ error: 'Daily code not found' });
-        }
-
-        // Calculate feedback
-        let correctPosition = 0;
-        let correctDigits = 0;
+        const code = generateDailyCode();
         const guessArray = guess.split('');
-        const codeArray = dailyCode.split('');
-        
+        const codeArray = code.split('');
+
         // Count correct positions
+        let correctPosition = 0;
+        let correctDigit = 0;
+        const usedIndices = new Set();
+
+        // First pass: Check correct positions
         for (let i = 0; i < 5; i++) {
             if (guessArray[i] === codeArray[i]) {
                 correctPosition++;
-                // Mark these digits as used
-                guessArray[i] = 'x';
-                codeArray[i] = 'y';
+                usedIndices.add(i);
             }
         }
 
-        // Count correct digits in wrong positions
+        // Second pass: Check correct digits in wrong positions
         for (let i = 0; i < 5; i++) {
-            if (guessArray[i] !== 'x') {
-                const index = codeArray.indexOf(guessArray[i]);
-                if (index !== -1) {
-                    correctDigits++;
-                    codeArray[index] = 'y';
+            if (!usedIndices.has(i)) {
+                for (let j = 0; j < 5; j++) {
+                    if (!usedIndices.has(j) && guessArray[i] === codeArray[j]) {
+                        correctDigit++;
+                        usedIndices.add(j);
+                        break;
+                    }
                 }
             }
         }
 
-        return res.status(200).json({
-            correctPosition,
-            correctDigits,
-            isCorrect: correctPosition === 5
-        });
+        const isCorrect = correctPosition === 5;
 
-    } catch (error) {
-        console.error('Error in validate_guess API:', error);
-        return res.status(500).json({
-            error: 'Internal server error',
-            details: error.message
+        res.status(200).json({
+            correctPosition,
+            correctDigit,
+            isCorrect
         });
+    } catch (error) {
+        console.error('Error validating guess:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 } 
