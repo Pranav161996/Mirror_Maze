@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Games</title>
-    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -25,65 +24,58 @@
             margin-bottom: 20px;
         }
 
-        .game-description {
-            text-align: center;
-            font-size: 1.5rem;
-            margin-bottom: 40px;
-            max-width: 800px;
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
         }
 
-        .game-button {
-            background-color: white;
-            color: #4B86E8;
-            border: none;
-            padding: 15px 60px;
-            border-radius: 30px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-            text-decoration: none;
-            margin-top: 20px;
-            display: inline-block;
-        }
-
-        .game-button:hover {
-            transform: scale(1.05);
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
         }
 
         .game-icon {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 30px;
+            font-size: 2rem;
+            margin-bottom: 20px;
         }
 
-        .mirror-maze-icon {
-            margin-bottom: 30px;
+        .play-now {
+            color: #4B86E8;
+            text-decoration: none;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+            display: inline-block;
         }
 
-        .mirror-maze-icon svg {
-            width: 100px;
-            height: 100px;
-            stroke: white;
+        .play-now:hover {
+            transform: scale(1.05);
+        }
+
+        .game-section {
+            margin-bottom: 60px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Daily Games</h1>
-        <div class="game-cards">
-            <div class="game-card">
-                <div class="game-icon">🎮</div>
-                <h2>Mirror Maze</h2>
-                <p>Navigate through a maze of mirrors to find the exit. Each move counts!</p>
-                <a href="play_mirror_maze.html" class="play-button">Play Now</a>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🔢</div>
-                <h2>Code Breaker</h2>
-                <p>Crack the 5-digit code! Each guess gives you feedback on correct digits and positions.</p>
-                <a href="play_code_breaker.html" class="play-button">Play Now</a>
-            </div>
-        </div>
+    <h1>Daily Games</h1>
+    
+    <div class="game-section">
+        <div class="game-icon">🎮</div>
+        <h2>Mirror Maze</h2>
+        <p>Navigate through a maze of mirrors to find the exit. Each move counts!</p>
+        <a href="play_mirror_maze.html" class="play-now">Play Now</a>
+    </div>
+
+    <div class="game-section">
+        <div class="game-icon">🔢</div>
+        <h2>Code Breaker</h2>
+        <p>Crack the 5-digit code! Each guess gives you feedback on correct digits and positions.</p>
+        <a href="play_code_breaker.html" class="play-now">Play Now</a>
     </div>
 </body>
 </html> 
