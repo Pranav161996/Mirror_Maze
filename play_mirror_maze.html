@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mirror Maze - Daily Puzzle</title>
     <style>
         body {
@@ -13,6 +13,13 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
         .game-container {
@@ -21,6 +28,8 @@
             padding: 0;
             gap: 0;
             min-height: 0; /* Remove min-height for desktop */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .game-content {
@@ -829,6 +838,12 @@
                 height: 14px;
             }
         }
+
+        /* Add these new styles */
+        canvas {
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
     </style>
 </head>
 <body>
@@ -836,7 +851,7 @@
     <div class="rules-popup" id="rulesPopup">
         <div class="rules-content">
             <button class="close-rules" onclick="closeRules()">×</button>
-            <img src="rules.png" alt="Mirror Maze Rules" class="rules-image">
+            <img src="/rules.png" alt="Mirror Maze Rules" class="rules-image">
             <button class="continue-button" onclick="closeRules()">Continue</button>
         </div>
     </div>
@@ -901,22 +916,9 @@
         let player1Pos = null;
         let player2Pos = null;
         let movesCount = 0;
-        let gameWon = false; // Add flag to track game state
+        let gameWon = false;
 
-        let apiKey = null;
         const MIRROR_MAZE_BIN_ID = '67f912b08a456b7966874534';
-
-        // Fetch API key on page load
-        async function fetchApiKey() {
-            try {
-                const response = await fetch('/api/config');
-                if (!response.ok) throw new Error('Failed to fetch config');
-                const config = await response.json();
-                apiKey = config.apiKey;
-            } catch (error) {
-                console.error('Error fetching API key:', error);
-            }
-        }
 
         // Function to save game state
         function saveGameState() {
@@ -983,10 +985,12 @@
         function loadPuzzle() {
             gameWon = false; // Reset game state when loading new puzzle
             const puzzleFile = urlParams.get('puzzle') || getTodayPuzzleFile();
+            
+            // First try to load from the current directory
             fetch(puzzleFile)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error('Failed to load puzzle file');
                     }
                     return response.json();
                 })
@@ -1000,7 +1004,7 @@
                     renderMap();
                 })
                 .catch(error => {
-                    console.warn('Error loading puzzle file, using default puzzle:', error);
+                    console.warn('Using default puzzle:', error);
                     currentMap = defaultPuzzle;
                     if (!loadGameState()) {
                         player1Pos = { ...defaultPuzzle.player1 };
@@ -1187,21 +1191,8 @@
 
         // Add these functions to handle leaderboard
         async function fetchLeaderboard() {
-            if (!apiKey) {
-                await fetchApiKey();
-            }
-
-            if (!apiKey) {
-                console.error('API key not available');
-                return [];
-            }
-
             try {
-                const response = await fetch(`/api/leaderboard?game=Mirror_Maze&binId=${MIRROR_MAZE_BIN_ID}`, {
-                    headers: {
-                        'X-Master-Key': apiKey
-                    }
-                });
+                const response = await fetch(`/api/leaderboard?game=Mirror_Maze&binId=${MIRROR_MAZE_BIN_ID}`);
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(`Failed to fetch leaderboard: ${response.status} - ${errorText}`);
@@ -1214,21 +1205,11 @@
         }
 
         async function submitScore(name, moves) {
-            if (!apiKey) {
-                await fetchApiKey();
-            }
-
-            if (!apiKey) {
-                console.error('API key not available');
-                return false;
-            }
-
             try {
                 const response = await fetch('/api/leaderboard', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': apiKey
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         name,
@@ -1249,9 +1230,6 @@
                 return false;
             }
         }
-
-        // Initialize API key on page load
-        document.addEventListener('DOMContentLoaded', fetchApiKey);
 
         function displayLeaderboard(leaderboard) {
             const leaderboardList = document.getElementById('leaderboardList');

@@ -55,117 +55,115 @@ async function updateLeaderboard(leaderboard, binId) {
 
 // Vercel API handler
 export default async function handler(req, res) {
-    console.log(`[${new Date().toISOString()}] ${req.method} request to /api/leaderboard`);
-    console.log('Query parameters:', req.query);
-    console.log('URL:', req.url);
-    
     // Set CORS headers
-    res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-    res.setHeader(
-        'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-    );
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    // Handle OPTIONS request (for CORS)
+    // Handle preflight requests
     if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+        return res.status(200).end();
     }
 
-    // Add cache control headers
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    res.setHeader('Expires', '-1');
-    res.setHeader('Pragma', 'no-cache');
+    // Get the API key from environment variables
+    const apiKey = process.env.JSONBIN_API_KEY;
+    if (!apiKey) {
+        console.error('JSONBIN_API_KEY environment variable is not set');
+        return res.status(500).json({ error: 'Server configuration error' });
+    }
 
     try {
-        // Log environment variables (without revealing sensitive data)
-        console.log('Environment check:', {
-            JSONBIN_API_KEY: process.env.JSONBIN_API_KEY ? 'Set' : 'Not set'
-        });
-
-        // Check environment variables
-        if (!process.env.JSONBIN_API_KEY) {
-            console.error('Missing required environment variables');
-            return res.status(500).json({ 
-                error: 'Server configuration error',
-                details: 'Missing required environment variables'
-            });
-        }
-
         if (req.method === 'GET') {
-            console.log('Processing GET request');
-            const gameName = (req.query && req.query.game) || 'Mirror_Maze';
-            const binId = req.query.binId;
-            console.log('Game name:', gameName, 'Bin ID:', binId);
-
-            if (!binId) {
-                return res.status(400).json({ 
-                    error: 'Missing required parameter',
-                    details: 'binId is required'
-                });
+            const { game, binId } = req.query;
+            
+            if (!game || !binId) {
+                return res.status(400).json({ error: 'Missing game or binId parameter' });
             }
 
-            const leaderboard = await getLeaderboard(binId);
-            console.log('Fetched leaderboard entries:', leaderboard.length);
+            // Fetch leaderboard data from JSONBin
+            const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+                headers: {
+                    'X-Master-Key': apiKey
+                }
+            });
 
-            const scores = leaderboard
-                .filter(entry => entry.game === gameName)
-                .sort((a, b) => a.moves - b.moves)
-                .slice(0, 10);
-
-            console.log('Filtered scores:', scores.length);
-            return res.status(200).json(scores);
-        } 
-        else if (req.method === 'POST') {
-            console.log('Processing POST request');
-            console.log('Request body:', req.body);
-
-            const { name, moves, game = 'Mirror_Maze', binId } = req.body;
-
-            if (!name || typeof moves !== 'number' || !game || !binId) {
-                console.error('Invalid score data:', { name, moves, game, binId });
-                return res.status(400).json({ 
-                    error: 'Invalid score data',
-                    details: 'Name, moves (number), game, and binId are required'
-                });
+            if (!response.ok) {
+                throw new Error(`JSONBin API error: ${response.status} ${response.statusText}`);
             }
 
-            const leaderboard = await getLeaderboard(binId);
-            const today = new Date().toDateString();
-            const newEntry = {
+            const data = await response.json();
+            const today = new Date().toISOString().split('T')[0];
+            const scores = data.record[today] || [];
+
+            // Filter scores for the specific game and sort by moves
+            const gameScores = scores
+                .filter(score => score.game === game)
+                .sort((a, b) => a.moves - b.moves);
+
+            return res.status(200).json(gameScores);
+
+        } else if (req.method === 'POST') {
+            const { name, moves, game, binId } = req.body;
+
+            if (!name || !moves || !game || !binId) {
+                return res.status(400).json({ error: 'Missing required fields' });
+            }
+
+            // Fetch current data
+            const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+                headers: {
+                    'X-Master-Key': apiKey
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`JSONBin API error: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const today = new Date().toISOString().split('T')[0];
+            const currentScores = data.record[today] || [];
+
+            // Add new score
+            const newScore = {
                 name,
                 moves,
                 game,
-                date: today,
                 timestamp: new Date().toISOString()
             };
 
-            console.log('New entry:', newEntry);
+            currentScores.push(newScore);
 
-            const filteredLeaderboard = leaderboard.filter(entry => 
-                !(entry.game === game && entry.name === name)
-            );
+            // Update JSONBin
+            const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': apiKey
+                },
+                body: JSON.stringify({
+                    ...data.record,
+                    [today]: currentScores
+                })
+            });
 
-            filteredLeaderboard.push(newEntry);
-            await updateLeaderboard(filteredLeaderboard, binId);
+            if (!updateResponse.ok) {
+                throw new Error(`Failed to update JSONBin: ${updateResponse.status} ${updateResponse.statusText}`);
+            }
 
-            const scores = filteredLeaderboard
-                .filter(entry => entry.game === game)
-                .sort((a, b) => a.moves - b.moves)
-                .slice(0, 10);
+            // Return only the scores for the specific game, sorted by moves
+            const gameScores = currentScores
+                .filter(score => score.game === game)
+                .sort((a, b) => a.moves - b.moves);
 
-            console.log('Updated scores:', scores.length);
-            res.status(200).json(scores);
-        } 
-        else {
-            console.warn(`Unsupported method: ${req.method}`);
-            res.status(405).json({ error: 'Method not allowed' });
+            return res.status(200).json(gameScores);
         }
+
+        return res.status(405).json({ error: 'Method not allowed' });
+
     } catch (error) {
-        console.error('Error handling request:', error);
-        res.status(500).json({ 
+        console.error('Error in leaderboard API:', error);
+        return res.status(500).json({
             error: 'Internal server error',
             details: error.message
         });
