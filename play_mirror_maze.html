@@ -829,25 +829,6 @@
                 height: 14px;
             }
         }
-
-        /* Add styles for the Hall of Fame button */
-        .win-message .game-button {
-            background: #4a90e2;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin: 10px 0;
-            transition: all 0.2s;
-        }
-
-        .win-message .game-button:hover {
-            background: #357abd;
-            transform: translateY(-2px);
-        }
     </style>
 </head>
 <body>
@@ -922,16 +903,18 @@
         let movesCount = 0;
         let gameWon = false; // Add flag to track game state
 
-        // Add secure configuration loading
-        async function getJSONBinConfig() {
+        let apiKey = null;
+        const MIRROR_MAZE_BIN_ID = '67f912b08a456b7966874534';
+
+        // Fetch API key on page load
+        async function fetchApiKey() {
             try {
-                // In production, this would fetch from your secure backend
-                const response = await fetch('/api/config/jsonbin');
+                const response = await fetch('/api/config');
+                if (!response.ok) throw new Error('Failed to fetch config');
                 const config = await response.json();
-                return config;
+                apiKey = config.apiKey;
             } catch (error) {
-                console.error('Error loading JSONBin configuration:', error);
-                return null;
+                console.error('Error fetching API key:', error);
             }
         }
 
@@ -1204,9 +1187,25 @@
 
         // Add these functions to handle leaderboard
         async function fetchLeaderboard() {
+            if (!apiKey) {
+                await fetchApiKey();
+            }
+
+            if (!apiKey) {
+                console.error('API key not available');
+                return [];
+            }
+
             try {
-                const response = await fetch('/api/leaderboard?game=Mirror_Maze');
-                if (!response.ok) throw new Error('Failed to fetch leaderboard');
+                const response = await fetch(`/api/leaderboard?game=Mirror_Maze&binId=${MIRROR_MAZE_BIN_ID}`, {
+                    headers: {
+                        'X-Master-Key': apiKey
+                    }
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch leaderboard: ${response.status} - ${errorText}`);
+                }
                 return await response.json();
             } catch (error) {
                 console.error('Error fetching leaderboard:', error);
@@ -1214,28 +1213,45 @@
             }
         }
 
-        async function updateLeaderboard(name, moves) {
+        async function submitScore(name, moves) {
+            if (!apiKey) {
+                await fetchApiKey();
+            }
+
+            if (!apiKey) {
+                console.error('API key not available');
+                return false;
+            }
+
             try {
                 const response = await fetch('/api/leaderboard', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': apiKey
                     },
                     body: JSON.stringify({
                         name,
-                        moves: movesCount,
+                        moves,
                         game: 'Mirror_Maze',
-                        binId: '67f912b08a456b7966874534'  // Specify the Mirror Maze leaderboard bin
+                        binId: MIRROR_MAZE_BIN_ID
                     })
                 });
-                
-                if (!response.ok) throw new Error('Failed to update leaderboard');
-                const leaderboard = await response.json();
-                displayLeaderboard(leaderboard);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to submit score: ${response.status} - ${errorText}`);
+                }
+
+                return true;
             } catch (error) {
-                console.error('Error updating leaderboard:', error);
+                console.error('Error submitting score:', error);
+                return false;
             }
         }
+
+        // Initialize API key on page load
+        document.addEventListener('DOMContentLoaded', fetchApiKey);
 
         function displayLeaderboard(leaderboard) {
             const leaderboardList = document.getElementById('leaderboardList');
@@ -1282,27 +1298,27 @@
 
         // Update the promptForName function
         async function promptForName() {
-            // Double check game is won before prompting
-            if (!gameWon) {
-                console.log('Game not won, skipping name prompt');
-                return;
-            }
-
-            const name = prompt('Enter your name for the Hall of Fame:');
+            const name = prompt('Congratulations! Enter your name for the leaderboard:');
             if (name) {
                 try {
-                    await updateLeaderboard(name, movesCount);
-                    // After successful update, refresh the leaderboard display
-                    const leaderboard = await fetchLeaderboard();
-                    displayLeaderboard(leaderboard);
-                    // Hide the "Add Name" button after successful submission
-                    const addNameButton = document.querySelector('.game-button');
-                    if (addNameButton) {
-                        addNameButton.style.display = 'none';
+                    const response = await fetch('/api/leaderboard', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ name, moves: movesCount })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to update leaderboard');
                     }
+                    
+                    const updatedLeaderboard = await response.json();
+                    console.log('Leaderboard updated:', updatedLeaderboard); // Debug log
+                    displayLeaderboard(updatedLeaderboard);
                 } catch (error) {
-                    console.error('Error saving score:', error);
-                    alert('Failed to save score. Please try again.');
+                    console.error('Error updating leaderboard:', error);
+                    alert('Failed to update leaderboard. Please try again.');
                 }
             }
         }
@@ -1326,11 +1342,10 @@
             winMessage.className = 'win-message';
             winMessage.id = 'winMessage';
             
-            // Add content to win message with Hall of Fame button
+            // Add content to win message with dismiss button
             winMessage.innerHTML = `
                 <h2>Congratulations! 🎉</h2>
                 <p>You completed the puzzle in <span id="finalMoves">${movesCount}</span> moves!</p>
-                <button class="game-button" onclick="promptForName()">Add Name to Hall of Fame</button>
                 <div class="leaderboard">
                     <h3>Daily Leaderboard</h3>
                     <ul class="leaderboard-list" id="leaderboardList">
@@ -1353,6 +1368,13 @@
             });
             
             showConfetti();
+            
+            // Wait for animations to complete before showing name prompt
+            if (!gameWon) { // Only prompt for name if not already won
+                setTimeout(() => {
+                    promptForName();
+                }, 1500);
+            }
         }
 
         // Add dismiss function
@@ -1418,50 +1440,41 @@
 
         // Add leaderboard modal functions
         async function showLeaderboardModal() {
-            try {
-                const modalOverlay = document.getElementById('leaderboardModalOverlay');
-                const modal = document.getElementById('leaderboardModal');
-                
-                // Show loading state
-                const leaderboardList = document.getElementById('modalLeaderboardList');
-                leaderboardList.innerHTML = '<li class="leaderboard-item">Loading...</li>';
-                
-                // Show modal immediately while loading
-                modalOverlay.classList.add('show');
-                modal.classList.add('show');
-                
-                // Fetch latest leaderboard data
-                const leaderboard = await fetchLeaderboard();
-                
-                // Display leaderboard in modal
-                leaderboardList.innerHTML = '';
+            const modalOverlay = document.getElementById('leaderboardModalOverlay');
+            const modal = document.getElementById('leaderboardModal');
+            
+            // Fetch latest leaderboard data
+            const leaderboard = await fetchLeaderboard();
+            
+            // Display leaderboard in modal
+            const leaderboardList = document.getElementById('modalLeaderboardList');
+            leaderboardList.innerHTML = '';
 
-                if (leaderboard.length === 0) {
-                    leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet!</li>';
-                } else {
-                    leaderboard.forEach((entry, index) => {
-                        const li = document.createElement('li');
-                        li.className = 'leaderboard-item';
-                        
-                        if (index === 0) li.classList.add('gold');
-                        if (index === 1) li.classList.add('silver');
-                        if (index === 2) li.classList.add('bronze');
+            if (leaderboard.length === 0) {
+                leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet today!</li>';
+            } else {
+                leaderboard.forEach((entry, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'leaderboard-item';
+                    
+                    if (index === 0) li.classList.add('gold');
+                    if (index === 1) li.classList.add('silver');
+                    if (index === 2) li.classList.add('bronze');
 
-                        li.innerHTML = `
-                            <span>${index + 1}. ${entry.name}</span>
-                            <span>${entry.moves} moves</span>
-                        `;
-                        leaderboardList.appendChild(li);
-                        
-                        // Add delay to each item's animation
-                        li.style.animationDelay = `${index * 0.1}s`;
-                    });
-                }
-            } catch (error) {
-                console.error('Error showing leaderboard:', error);
-                const leaderboardList = document.getElementById('modalLeaderboardList');
-                leaderboardList.innerHTML = '<li class="leaderboard-item">Failed to load leaderboard. Please try again.</li>';
+                    li.innerHTML = `
+                        <span>${index + 1}. ${entry.name}</span>
+                        <span>${entry.moves} moves</span>
+                    `;
+                    leaderboardList.appendChild(li);
+                    
+                    // Add delay to each item's animation
+                    li.style.animationDelay = `${index * 0.1}s`;
+                });
             }
+
+            // Show modal with animation
+            modalOverlay.classList.add('show');
+            modal.classList.add('show');
         }
 
         function hideLeaderboardModal() {

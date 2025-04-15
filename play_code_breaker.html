@@ -26,9 +26,136 @@
             margin-bottom: 20px;
         }
 
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
         .game-title {
             font-size: 1.5rem;
             margin: 0;
+        }
+
+        .instructions {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto 20px;
+            width: 100%;
+        }
+
+        .instructions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .instructions-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .instructions-toggle {
+            color: #666;
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .instructions-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+
+        .instructions-content.expanded {
+            max-height: 2000px;
+        }
+
+        .instructions ul {
+            padding-left: 0;
+            list-style: none;
+            color: #444;
+        }
+
+        .instructions li {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .example-section {
+            background: #f8f8f8;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .example-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .example-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .example-code {
+            font-family: monospace;
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 1.1rem;
+        }
+
+        .feedback-example {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+        }
+
+        .feedback-item {
+            font-size: 1rem;
+            padding: 8px 15px;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            color: #666;
+            flex: 1;
+        }
+
+        .tip-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .tip-title {
+            color: #2E7D32;
+            font-weight: bold;
+            margin-bottom: 8px;
         }
 
         .guess-container {
@@ -106,12 +233,6 @@
             gap: 10px;
         }
 
-        .feedback-item {
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.9rem;
-        }
-
         .correct-position {
             background: #90EE90;
             color: #006400;
@@ -134,6 +255,8 @@
             text-align: center;
             display: none;
             z-index: 1000;
+            max-width: 90%;
+            width: 400px;
         }
 
         .win-message.show {
@@ -170,13 +293,144 @@
         .back-button:hover {
             background: #555;
         }
+
+        .leaderboard {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .leaderboard h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .win-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        .win-overlay.show {
+            display: block;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .dismiss-button {
+            padding: 10px 20px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .dismiss-button:hover {
+            background: #555;
+        }
     </style>
 </head>
 <body>
     <div class="game-header">
-        <a href="/" class="back-button">← Back</a>
+        <div class="header-buttons">
+            <a href="/" class="back-button">← Back</a>
+            <button class="back-button" onclick="showLeaderboard()">Leaderboard</button>
+        </div>
         <h1 class="game-title">Code Breaker</h1>
         <div class="moves-counter">Moves: <span id="movesCount">0</span></div>
+    </div>
+
+    <div class="instructions">
+        <div class="instructions-header" onclick="toggleInstructions()">
+            <h2>How to Play</h2>
+            <span class="instructions-toggle">▼</span>
+        </div>
+        <div class="instructions-content" id="instructionsContent">
+            <ul>
+                <li>Try to guess today's secret 5-digit code where each digit is unique (0-9)</li>
+                
+                <div class="example-section">
+                    <div class="example-title">Example:</div>
+                    <div class="example-row">
+                        <span class="example-code">8 2 3 6 4</span>
+                        <span class="feedback-text">← A valid code (all digits are unique)</span>
+                    </div>
+                    <div class="example-row">
+                        <span class="example-code">1 2 2 3 4</span>
+                        <span class="feedback-text">← Invalid code (digit 2 appears twice)</span>
+                    </div>
+                </div>
+
+                <li>After each guess, you'll get feedback about:</li>
+                <div class="example-section">
+                    <div class="feedback-example">
+                        <span class="feedback-item correct-position">2 correct positions</span>
+                        <span class="feedback-text">Digits that are in the right position</span>
+                    </div>
+                    <div class="feedback-example">
+                        <span class="feedback-item correct-digit">1 correct digit</span>
+                        <span class="feedback-text">Digits that exist in the code but are in wrong positions</span>
+                    </div>
+                </div>
+
+                <div class="example-section">
+                    <div class="example-title">Example Guess:</div>
+                    <div class="example-row">
+                        <span>If the secret code is</span>
+                        <span class="example-code">8 2 3 6 4</span>
+                    </div>
+                    <div class="example-row">
+                        <span>And you guess</span>
+                        <span class="example-code">8 3 1 6 9</span>
+                    </div>
+                    <div class="feedback-example">
+                        <span class="feedback-item correct-position">2 correct positions</span>
+                        <span class="feedback-text">('8' and '6' are in correct positions)</span>
+                    </div>
+                    <div class="feedback-example">
+                        <span class="feedback-item correct-digit">1 correct digit</span>
+                        <span class="feedback-text">('3' exists but in wrong position)</span>
+                    </div>
+                </div>
+
+                <div class="tip-section">
+                    <div class="tip-title">Strategy Tips:</div>
+                    <ul>
+                        <li>Start with digits spread across different ranges (e.g., 1,3,5,7,9)</li>
+                        <li>Use the feedback to eliminate possibilities</li>
+                        <li>When you find correct digits, try different positions</li>
+                    </ul>
+                </div>
+            </ul>
+        </div>
     </div>
 
     <div class="guess-container">
@@ -189,52 +443,44 @@
         </ul>
     </div>
 
+    <div class="win-overlay" id="winOverlay"></div>
     <div class="win-message" id="winMessage">
         <h2>Congratulations! 🎉</h2>
         <p>You broke the code in <span id="finalMoves">0</span> moves!</p>
-        <button class="submit-button" onclick="promptForName()">Save Score</button>
+        <div class="leaderboard">
+            <h3>Daily Leaderboard</h3>
+            <ul class="leaderboard-list" id="leaderboardList">
+                <!-- Leaderboard items will be inserted here -->
+            </ul>
+        </div>
+        <div class="button-container">
+            <button class="submit-button" onclick="promptForName()">Add Name to Hall of Fame</button>
+            <button class="dismiss-button" onclick="dismissWinMessage()">Close</button>
+        </div>
     </div>
 
     <script>
         let movesCount = 0;
         let gameWon = false;
-        let todayCode = '';
+        let apiKey = null;
+        const CODE_BREAKER_BIN_ID = '67fca1278960c979a5849c70';
 
-        // Function to get today's code from the server
-        async function getTodaysCode() {
+        // Base URL for API calls
+        const BASE_URL = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
+
+        // Fetch API key on page load
+        async function fetchApiKey() {
             try {
-                const response = await fetch('/api/daily_code');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch daily code');
-                }
-                const data = await response.json();
-                return data.code;
+                const response = await fetch(`${BASE_URL}/api/config`);
+                if (!response.ok) throw new Error('Failed to fetch config');
+                const config = await response.json();
+                apiKey = config.apiKey;
             } catch (error) {
-                console.error('Error fetching daily code:', error);
-                // Fallback to generating a random code if the server is unavailable
-                return generateRandomCode();
+                console.error('Error fetching API key:', error);
             }
         }
 
-        // Function to generate a random 5-digit code (fallback)
-        function generateRandomCode() {
-            const digits = [];
-            while (digits.length < 5) {
-                const digit = Math.floor(Math.random() * 10);
-                if (!digits.includes(digit)) {
-                    digits.push(digit);
-                }
-            }
-            return digits.join('');
-        }
-
-        // Initialize the game
-        async function initGame() {
-            todayCode = await getTodaysCode();
-            console.log('Today\'s code:', todayCode); // For debugging
-        }
-
-        function submitGuess() {
+        async function submitGuess() {
             if (gameWon) return;
 
             const input = document.getElementById('guessInput');
@@ -252,108 +498,195 @@
                 return;
             }
 
-            movesCount++;
-            document.getElementById('movesCount').textContent = movesCount;
+            try {
+                const response = await fetch(`${BASE_URL}/api/validate_guess`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ guess })
+                });
 
-            // Calculate feedback
-            let correctPosition = 0;
-            let correctDigit = 0;
-            const usedIndices = new Set();
-            const usedGuessIndices = new Set();
-
-            // First check for correct positions
-            for (let i = 0; i < 5; i++) {
-                if (guess[i] === todayCode[i]) {
-                    correctPosition++;
-                    usedIndices.add(i);
-                    usedGuessIndices.add(i);
+                if (!response.ok) {
+                    throw new Error('Failed to validate guess');
                 }
-            }
 
-            // Then check for correct digits in wrong positions
-            for (let i = 0; i < 5; i++) {
-                if (usedGuessIndices.has(i)) continue;
-                
-                for (let j = 0; j < 5; j++) {
-                    if (usedIndices.has(j)) continue;
-                    
-                    if (guess[i] === todayCode[j]) {
-                        correctDigit++;
-                        usedIndices.add(j);
-                        usedGuessIndices.add(i);
-                        break;
-                    }
+                const { correctPosition, correctDigit, isCorrect } = await response.json();
+
+                movesCount++;
+                document.getElementById('movesCount').textContent = movesCount;
+
+                // Add guess to list
+                const guessList = document.getElementById('guessesList');
+                const li = document.createElement('li');
+                li.className = 'guess-item';
+                li.innerHTML = `
+                    <span class="guess-number">${guess}</span>
+                    <div class="guess-feedback">
+                        ${correctPosition > 0 ? 
+                            `<span class="feedback-item correct-position">
+                                ${correctPosition} correct position${correctPosition > 1 ? 's' : ''}
+                            </span>` : ''
+                        }
+                        ${correctDigit > 0 ? 
+                            `<span class="feedback-item correct-digit">
+                                ${correctDigit} correct digit${correctDigit > 1 ? 's' : ''}
+                            </span>` : ''
+                        }
+                        ${correctPosition === 0 && correctDigit === 0 ? 
+                            '<span class="feedback-item">No matches</span>' : ''
+                        }
+                    </div>
+                `;
+                guessList.insertBefore(li, guessList.firstChild);
+
+                // Clear input
+                input.value = '';
+
+                // Check for win
+                if (isCorrect) {
+                    gameWon = true;
+                    showWinMessage();
                 }
+            } catch (error) {
+                console.error('Error submitting guess:', error);
+                alert('Failed to submit guess. Please try again.');
+            }
+        }
+
+        async function fetchLeaderboard() {
+            if (!apiKey) {
+                await fetchApiKey();
             }
 
-            // Add guess to list
-            const guessList = document.getElementById('guessesList');
-            const li = document.createElement('li');
-            li.className = 'guess-item';
-            li.innerHTML = `
-                <span class="guess-number">${guess}</span>
-                <div class="guess-feedback">
-                    ${correctPosition > 0 ? 
-                        `<span class="feedback-item correct-position">
-                            ${correctPosition} correct position${correctPosition > 1 ? 's' : ''}
-                        </span>` : ''
-                    }
-                    ${correctDigit > 0 ? 
-                        `<span class="feedback-item correct-digit">
-                            ${correctDigit} correct digit${correctDigit > 1 ? 's' : ''}
-                        </span>` : ''
-                    }
-                    ${correctPosition === 0 && correctDigit === 0 ? 
-                        '<span class="feedback-item">No matches</span>' : ''
-                    }
-                </div>
-            `;
-            guessList.insertBefore(li, guessList.firstChild);
-
-            // Clear input
-            input.value = '';
-
-            // Check for win
-            if (correctPosition === 5) {
-                gameWon = true;
-                showWinMessage();
+            if (!apiKey) {
+                console.error('API key not available');
+                return [];
             }
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/leaderboard?game=Code_Breaker&binId=${CODE_BREAKER_BIN_ID}`, {
+                    headers: {
+                        'X-Master-Key': apiKey
+                    }
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch leaderboard: ${response.status} - ${errorText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching leaderboard:', error);
+                return [];
+            }
+        }
+
+        function displayLeaderboard(leaderboard) {
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+
+            if (leaderboard.length === 0) {
+                leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet today!</li>';
+                return;
+            }
+
+            leaderboard.forEach((entry, index) => {
+                const li = document.createElement('li');
+                li.className = 'leaderboard-item';
+                li.innerHTML = `
+                    <span>${index + 1}. ${entry.name}</span>
+                    <span>${entry.moves} moves</span>
+                `;
+                leaderboardList.appendChild(li);
+            });
         }
 
         function showWinMessage() {
             document.getElementById('finalMoves').textContent = movesCount;
+            document.getElementById('winOverlay').classList.add('show');
             document.getElementById('winMessage').classList.add('show');
+            document.querySelector('.win-message h2').textContent = 'Congratulations! 🎉';
+            document.querySelector('.win-message p').style.display = 'block';
+            document.querySelector('.button-container .submit-button').style.display = 'block';
+            fetchLeaderboard().then(displayLeaderboard);
+        }
+
+        function showLeaderboard() {
+            document.getElementById('winOverlay').classList.add('show');
+            document.getElementById('winMessage').classList.add('show');
+            document.querySelector('.win-message h2').textContent = 'Daily Leaderboard';
+            document.querySelector('.win-message p').style.display = 'none';
+            document.querySelector('.button-container .submit-button').style.display = 'none';
+            fetchLeaderboard().then(displayLeaderboard);
+        }
+
+        function dismissWinMessage() {
+            document.getElementById('winOverlay').classList.remove('show');
+            document.getElementById('winMessage').classList.remove('show');
         }
 
         async function promptForName() {
-            const name = prompt('Enter your name for the leaderboard:');
-            if (name) {
-                try {
-                    const response = await fetch('/api/leaderboard', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name,
-                            moves: movesCount,
-                            game: 'Code_Breaker',
-                            binId: '67fca1278960c979a5849c70'  // Specify the Code Breaker leaderboard bin
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Failed to update leaderboard');
-                    }
-                    
-                    alert('Score saved successfully!');
-                    document.getElementById('winMessage').classList.remove('show');
-                } catch (error) {
-                    console.error('Error saving score:', error);
-                    alert('Failed to save score. Please try again.');
+            const name = prompt('Enter your name for the Hall of Fame:');
+            if (!name) return;
+
+            if (!apiKey) {
+                await fetchApiKey();
+            }
+
+            if (!apiKey) {
+                alert('Unable to connect to leaderboard. Please try again later.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/leaderboard`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': apiKey
+                    },
+                    body: JSON.stringify({
+                        name,
+                        moves: movesCount,
+                        game: 'Code_Breaker',
+                        binId: CODE_BREAKER_BIN_ID
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to update leaderboard: ${response.status} - ${errorText}`);
                 }
+                
+                const leaderboard = await response.json();
+                displayLeaderboard(leaderboard);
+                
+                // Hide the "Add Name" button after successful submission
+                const addNameButton = document.querySelector('.submit-button');
+                if (addNameButton) {
+                    addNameButton.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error saving score:', error);
+                alert('Failed to save score. Please try again.');
             }
         }
+
+        function toggleInstructions() {
+            const content = document.getElementById('instructionsContent');
+            const toggle = document.querySelector('.instructions-toggle');
+            content.classList.toggle('expanded');
+            toggle.style.transform = content.classList.contains('expanded') ? 'rotate(180deg)' : '';
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchApiKey();
+            // Start with collapsed instructions on mobile, expanded on desktop
+            if (window.innerWidth > 768) {
+                toggleInstructions();
+            }
+        });
 
         // Handle Enter key in input
         document.getElementById('guessInput').addEventListener('keypress', function(e) {
@@ -361,9 +694,6 @@
                 submitGuess();
             }
         });
-
-        // Initialize the game when the page loads
-        initGame();
     </script>
 </body>
 </html> 
