@@ -18,22 +18,18 @@
             "use": "@vercel/static"
         },
         {
-            "src": "images/*",
+            "src": "*.json",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "*.png",
             "use": "@vercel/static"
         }
     ],
     "routes": [
         {
-            "src": "/api/(.*)",
-            "dest": "/api/$1.js"
-        },
-        {
-            "src": "/",
-            "dest": "/index.html"
-        },
-        {
-            "src": "/play",
-            "dest": "/play_mirror_maze.html"
+            "src": "/api/leaderboard",
+            "dest": "/api/leaderboard.js"
         },
         {
             "src": "/(.*)",
