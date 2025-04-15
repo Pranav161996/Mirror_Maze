@@ -480,6 +480,20 @@
             }
         }
 
+        async function getDailyCode() {
+            try {
+                const response = await fetch('/api/daily_code');
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch daily code: ${response.status} ${response.statusText}`);
+                }
+                const data = await response.json();
+                return data.code;
+            } catch (error) {
+                console.error('Error getting daily code:', error);
+                throw error;
+            }
+        }
+
         async function submitGuess() {
             if (gameWon) return;
 
@@ -499,7 +513,7 @@
             }
 
             try {
-                const response = await fetch(`${BASE_URL}/api/validate_guess`, {
+                const response = await fetch('/api/validate_guess', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -508,11 +522,11 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to validate guess');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to validate guess');
                 }
 
-                const { correctPosition, correctDigit, isCorrect } = await response.json();
-
+                const data = await response.json();
                 movesCount++;
                 document.getElementById('movesCount').textContent = movesCount;
 
@@ -523,17 +537,17 @@
                 li.innerHTML = `
                     <span class="guess-number">${guess}</span>
                     <div class="guess-feedback">
-                        ${correctPosition > 0 ? 
+                        ${data.correctPosition > 0 ? 
                             `<span class="feedback-item correct-position">
-                                ${correctPosition} correct position${correctPosition > 1 ? 's' : ''}
+                                ${data.correctPosition} correct position${data.correctPosition > 1 ? 's' : ''}
                             </span>` : ''
                         }
-                        ${correctDigit > 0 ? 
+                        ${data.correctDigit > 0 ? 
                             `<span class="feedback-item correct-digit">
-                                ${correctDigit} correct digit${correctDigit > 1 ? 's' : ''}
+                                ${data.correctDigit} correct digit${data.correctDigit > 1 ? 's' : ''}
                             </span>` : ''
                         }
-                        ${correctPosition === 0 && correctDigit === 0 ? 
+                        ${data.correctPosition === 0 && data.correctDigit === 0 ? 
                             '<span class="feedback-item">No matches</span>' : ''
                         }
                     </div>
@@ -544,7 +558,7 @@
                 input.value = '';
 
                 // Check for win
-                if (isCorrect) {
+                if (data.isCorrect) {
                     gameWon = true;
                     showWinMessage();
                 }
