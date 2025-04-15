@@ -94,16 +94,25 @@ export default async function handler(req, res) {
             const data = await response.json();
             const today = new Date().toISOString().split('T')[0];
             
-            // Handle both array and object data structures
-            let scores = [];
-            if (Array.isArray(data.record)) {
-                scores = data.record;
-            } else if (typeof data.record === 'object') {
-                scores = data.record[today] || [];
+            // Initialize data structure if needed
+            let record = data.record;
+            if (!record || typeof record !== 'object') {
+                record = {};
+            }
+            if (!record[today]) {
+                record[today] = [];
             }
 
-            // Filter scores for the specific game and sort by moves
-            const gameScores = scores
+            // Ensure backward compatibility with old format
+            if (Array.isArray(record)) {
+                const oldScores = record;
+                record = {
+                    [today]: oldScores
+                };
+            }
+
+            // Filter and sort scores for the specific game
+            const gameScores = record[today]
                 .filter(score => score && score.game === game)
                 .sort((a, b) => a.moves - b.moves);
 
@@ -129,7 +138,23 @@ export default async function handler(req, res) {
 
             const data = await response.json();
             const today = new Date().toISOString().split('T')[0];
-            const currentScores = data.record[today] || [];
+            
+            // Initialize data structure if needed
+            let record = data.record;
+            if (!record || typeof record !== 'object') {
+                record = {};
+            }
+            if (!record[today]) {
+                record[today] = [];
+            }
+
+            // Ensure backward compatibility with old format
+            if (Array.isArray(record)) {
+                const oldScores = record;
+                record = {
+                    [today]: oldScores
+                };
+            }
 
             // Add new score
             const newScore = {
@@ -139,7 +164,7 @@ export default async function handler(req, res) {
                 timestamp: new Date().toISOString()
             };
 
-            currentScores.push(newScore);
+            record[today].push(newScore);
 
             // Update JSONBin
             const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
@@ -148,10 +173,7 @@ export default async function handler(req, res) {
                     'Content-Type': 'application/json',
                     'X-Master-Key': apiKey
                 },
-                body: JSON.stringify({
-                    ...data.record,
-                    [today]: currentScores
-                })
+                body: JSON.stringify({ record })
             });
 
             if (!updateResponse.ok) {
@@ -159,8 +181,8 @@ export default async function handler(req, res) {
             }
 
             // Return only the scores for the specific game, sorted by moves
-            const gameScores = currentScores
-                .filter(score => score.game === game)
+            const gameScores = record[today]
+                .filter(score => score && score.game === game)
                 .sort((a, b) => a.moves - b.moves);
 
             return res.status(200).json(gameScores);
