@@ -1193,10 +1193,9 @@
         // Add these functions to handle leaderboard
         async function fetchLeaderboard() {
             try {
-                const response = await fetch(`/api/leaderboard?game=Mirror_Maze&binId=${MIRROR_MAZE_BIN_ID}`);
+                const response = await fetch(`/api/leaderboard?game=Mirror_Maze`);
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Failed to fetch leaderboard: ${response.status} - ${errorText}`);
+                    throw new Error(`Failed to fetch leaderboard: ${response.status}`);
                 }
                 return await response.json();
             } catch (error) {
@@ -1216,7 +1215,7 @@
                         name,
                         moves,
                         game: 'Mirror_Maze',
-                        binId: MIRROR_MAZE_BIN_ID
+                        binId: '67f912b08a456b7966874534'
                     })
                 });
 
@@ -1236,14 +1235,13 @@
             const leaderboardList = document.getElementById('leaderboardList');
             leaderboardList.innerHTML = '';
 
-            if (leaderboard.length === 0) {
+            if (!leaderboard || leaderboard.length === 0) {
                 leaderboardList.innerHTML = '<li class="leaderboard-item">No scores yet today!</li>';
                 return;
             }
 
-            // Find the latest entry (assuming it's the last one in the array)
-            const latestEntry = leaderboard[leaderboard.length - 1];
-            const latestTimestamp = latestEntry.timestamp;
+            // Sort leaderboard by moves (ascending)
+            leaderboard.sort((a, b) => a.moves - b.moves);
 
             leaderboard.forEach((entry, index) => {
                 const li = document.createElement('li');
@@ -1253,16 +1251,6 @@
                 if (index === 0) li.classList.add('gold');
                 if (index === 1) li.classList.add('silver');
                 if (index === 2) li.classList.add('bronze');
-
-                // Add new-entry class if this is the latest entry
-                if (entry.timestamp === latestTimestamp) {
-                    li.classList.add('new-entry');
-                    // Add rank badge
-                    const rankBadge = document.createElement('div');
-                    rankBadge.className = 'rank-badge';
-                    rankBadge.textContent = `Rank #${index + 1}`;
-                    li.appendChild(rankBadge);
-                }
 
                 li.innerHTML = `
                     <span>${index + 1}. ${entry.name}</span>

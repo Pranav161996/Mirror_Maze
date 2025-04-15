@@ -638,9 +638,9 @@
         // Leaderboard functions
         async function fetchLeaderboard() {
             try {
-                const response = await fetch(`/api/leaderboard?game=Code_Breaker&binId=67f912b08a456b7966874534`);
+                const response = await fetch(`/api/leaderboard?game=Code_Breaker`);
                 if (!response.ok) {
-                    throw new Error('Failed to fetch leaderboard');
+                    throw new Error(`Failed to fetch leaderboard: ${response.status}`);
                 }
                 return await response.json();
             } catch (error) {
@@ -692,8 +692,7 @@
                     body: JSON.stringify({
                         name,
                         moves: movesCount,
-                        game: 'Code_Breaker',
-                        binId: '67f912b08a456b7966874534'
+                        game: 'Code_Breaker'
                     })
                 });
 
@@ -714,12 +713,9 @@
 
         async function startNewGame() {
             try {
-                const response = await fetch('/api/daily_code');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch daily code');
-                }
-                const data = await response.json();
-                code = data.code;
+                // Generate new code using local function
+                const today = new Date().toISOString().split('T')[0];
+                code = await generateDailyCode(today);
                 
                 // Reset game state
                 movesCount = 0;

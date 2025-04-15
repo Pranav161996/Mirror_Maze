@@ -1,4 +1,20 @@
-import { generateDailyCode } from './daily_code';
+// Generate a deterministic daily code based on date
+function generateDailyCode() {
+    const today = new Date().toISOString().split('T')[0];
+    const seed = parseInt(today.replace(/-/g, ''));
+    
+    // Use the seed to generate 5 unique digits
+    let digits = new Set();
+    let rng = seed;
+    
+    while (digits.size < 5) {
+        rng = (rng * 16807) % 2147483647; // Linear congruential generator
+        const digit = rng % 10;
+        digits.add(digit);
+    }
+    
+    return Array.from(digits).join('');
+}
 
 export default async function handler(req, res) {
     // Set CORS headers
@@ -19,6 +35,9 @@ export default async function handler(req, res) {
     try {
         const { guess } = req.body;
         
+        // Log request for debugging
+        console.log('Received guess:', guess);
+        
         // Validate input
         if (!guess || !/^\d{5}$/.test(guess)) {
             return res.status(400).json({ error: 'Invalid guess format. Must be 5 digits.' });
@@ -31,6 +50,8 @@ export default async function handler(req, res) {
 
         // Get today's code
         const code = generateDailyCode();
+        console.log('Daily code:', code); // For debugging
+        
         const guessArray = guess.split('');
         const codeArray = code.split('');
 
@@ -61,14 +82,14 @@ export default async function handler(req, res) {
         }
 
         const isCorrect = correctPosition === 5;
+        
+        // Log response for debugging
+        const response = { correctPosition, correctDigit, isCorrect };
+        console.log('Sending response:', response);
 
-        res.status(200).json({
-            correctPosition,
-            correctDigit,
-            isCorrect
-        });
+        res.status(200).json(response);
     } catch (error) {
         console.error('Error validating guess:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 } 
