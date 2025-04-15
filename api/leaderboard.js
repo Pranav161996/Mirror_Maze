@@ -56,7 +56,7 @@ async function updateLeaderboard(leaderboard, binId) {
 // Game-specific bin IDs
 const BIN_IDS = {
     'Mirror_Maze': '67f912b08a456b7966874534',
-    'Code_Breaker': '67f912b08a456b7966874534'
+    'Code_Breaker': '67fca1278960c979a5849c70'
 };
 
 // Vercel API handler
