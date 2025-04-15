@@ -53,6 +53,12 @@ async function updateLeaderboard(leaderboard, binId) {
     }
 }
 
+// Game-specific bin IDs
+const BIN_IDS = {
+    'Mirror_Maze': '67f912b08a456b7966874534',
+    'Code_Breaker': '67f912b08a456b7966874534'
+};
+
 // Vercel API handler
 export default async function handler(req, res) {
     // Set CORS headers
@@ -65,22 +71,26 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    // Get the API key from environment variables
     const apiKey = process.env.JSONBIN_API_KEY;
     if (!apiKey) {
-        console.error('JSONBIN_API_KEY environment variable is not set');
+        console.error('Missing JSONBIN_API_KEY environment variable');
         return res.status(500).json({ error: 'Server configuration error' });
     }
 
     try {
         if (req.method === 'GET') {
-            const { game, binId } = req.query;
+            const { game } = req.query;
             
-            if (!game || !binId) {
-                return res.status(400).json({ error: 'Missing game or binId parameter' });
+            if (!game) {
+                return res.status(400).json({ error: 'Missing game parameter' });
             }
 
-            // Fetch leaderboard data from JSONBin
+            const binId = BIN_IDS[game];
+            if (!binId) {
+                return res.status(400).json({ error: 'Invalid game specified' });
+            }
+
+            // Fetch current data
             const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
                 headers: {
                     'X-Master-Key': apiKey
@@ -119,10 +129,15 @@ export default async function handler(req, res) {
             return res.status(200).json(gameScores);
 
         } else if (req.method === 'POST') {
-            const { name, moves, game, binId } = req.body;
+            const { name, moves, game } = req.body;
 
-            if (!name || !moves || !game || !binId) {
+            if (!name || !moves || !game) {
                 return res.status(400).json({ error: 'Missing required fields' });
+            }
+
+            const binId = BIN_IDS[game];
+            if (!binId) {
+                return res.status(400).json({ error: 'Invalid game specified' });
             }
 
             // Fetch current data
