@@ -183,8 +183,17 @@ let dailyCode = {
 app.post('/api/validate_guess', (req, res) => {
     const { guess } = req.body;
     
-    if (!guess || guess.length !== 5 || !/^\d+$/.test(guess)) {
-        return res.status(400).json({ error: 'Invalid guess format' });
+    // Log request for debugging
+    console.log('Received guess:', guess);
+    
+    // Validate input
+    if (!guess || !/^\d{5}$/.test(guess)) {
+        return res.status(400).json({ error: 'Invalid guess format. Must be 5 digits.' });
+    }
+
+    // Check for duplicate digits
+    if (new Set(guess.split('')).size !== 5) {
+        return res.status(400).json({ error: 'All digits must be different.' });
     }
 
     const today = new Date().setHours(0, 0, 0, 0);
@@ -200,6 +209,7 @@ app.post('/api/validate_guess', (req, res) => {
     const usedIndices = new Set();
     const usedGuessIndices = new Set();
 
+    // First pass: Check correct positions
     for (let i = 0; i < 5; i++) {
         if (guess[i] === dailyCode.code[i]) {
             correctPosition++;
@@ -208,6 +218,7 @@ app.post('/api/validate_guess', (req, res) => {
         }
     }
 
+    // Second pass: Check correct digits in wrong positions
     for (let i = 0; i < 5; i++) {
         if (usedGuessIndices.has(i)) continue;
         
@@ -223,11 +234,9 @@ app.post('/api/validate_guess', (req, res) => {
         }
     }
 
-    res.json({
-        correctPosition,
-        correctDigit,
-        isCorrect: correctPosition === 5
-    });
+    const response = { correctPosition, correctDigit, isCorrect: correctPosition === 5 };
+    console.log('Sending response:', response);
+    res.json(response);
 });
 
 app.listen(port, () => {
