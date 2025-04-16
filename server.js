@@ -12,6 +12,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3000;
+const now = new Date();
+const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+const istToday = istNow.toISOString().slice(0, 10);
 
 // CORS middleware
 app.use((req, res, next) => {
@@ -55,15 +58,26 @@ app.get('/api/leaderboard', async (req, res) => {
 
         const data = await response.json();
         console.log('Raw JSONBin response:', JSON.stringify(data, null, 2));
-
+        
         // Initialize empty array if no record exists
         const scores = Array.isArray(data.record) ? data.record : [];
         
         // Filter by game and sort
         const gameScores = scores
-            .filter(score => score && score.game === game)
-            .sort((a, b) => a.moves - b.moves)
+    .filter(score => {
+        if (!score || score.game !== game || !score.timestamp) return false;
+        console.log('IST Today:', istToday);
+        const entryDateIST = new Date(new Date(score.timestamp).getTime() + (5.5 * 60 * 60 * 1000))
+            .toISOString()
             .slice(0, 10);
+        
+
+        return entryDateIST === istToday;
+
+    })
+    .sort((a, b) => a.moves - b.moves)
+    .slice(0, 10);
+
 
         res.json(gameScores);
     } catch (error) {
