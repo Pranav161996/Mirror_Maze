@@ -32,6 +32,10 @@
             "dest": "/api/leaderboard.js"
         },
         {
+            "src": "/api/validate_guess",
+            "dest": "/api/validate_guess.js"
+        },
+        {
             "src": "/(.*)",
             "dest": "/$1"
         }
